@@ -1,0 +1,76 @@
+# Project Intelligence & Development Guidelines: Collector Business Plan Analyzer
+
+This file captures project-specific patterns, preferences, and guidelines to ensure consistency and efficiency.
+
+## Core Cline Rules (Mandatory)
+
+1.  **Work only with the provided code.** Do not introduce alternate versions unless explicitly required.
+2.  **Keep changes minimal.** Modify only the lines absolutely needed. Always explain what was changed and why.
+3.  **Line-by-line analysis is crucial**—if requested, show exactly which lines you altered.
+4.  **Maintain context:** extend the existing codebase rather than rewriting it from scratch.
+5.  **Comments in Russian:** Whenever you add or modify a line of code (especially logic), clarify its purpose in Russian. `// Добавляем комментарий на русском языке`
+6.  **Justify decisions:** Explain why a fix or approach is necessary *before* applying it.
+7.  **Dependency Approval:** Obtain user approval before adding, removing, or updating dependencies in `package.json`. Confirm major changes with the user first.
+8.  **Optimization Discussion:** Discuss potential optimizations with the user *before* implementing them.
+9.  **File Size Limit:** Each `.ts` or `.tsx` file should ideally not exceed 100 lines of code (excluding imports, comments, and type definitions where reasonable). Plan component and logic structure accordingly. Break down complex components or logic into smaller, reusable pieces.
+
+## Project-Specific Guidelines
+
+### Code Delivery & Comments
+
+1.  **Deliver working, clean, and efficient React/TypeScript code.**
+2.  **Add detailed comments in Russian** for logic, complex components, Redux state/reducers/selectors, and utility functions.
+3.  **Begin implementation phases with a brief explanation** of the approach and component structure.
+4.  **When modifying existing code**, specify the file and function/component changed in comments (e.g., `// Изменено в src/components/StaffForm.tsx, функция handleSave`).
+5.  **Focus on a single task/feature at a time.**
+6.  **If referencing external documentation (e.g., MUI, Recharts), include links** in comments.
+7.  **Suggest ways to test** new components or logic after implementation (e.g., "You can now test adding a new staff member in the Staff Management section").
+8.  **Remind the user to commit changes in git**, suggesting a new branch for significant features.
+
+### Documentation Requirements (TSDoc/JSDoc)
+
+1.  **Document all component props** using TSDoc/JSDoc format.
+2.  **Document complex utility functions and hooks,** explaining parameters and return values.
+3.  **Document Redux slice state structure, actions, and selectors.**
+4.  **Comment complex logic** (e.g., financial calculations, state derivations) clearly.
+5.  **Explain the purpose of non-obvious `useEffect` hooks.**
+
+### Code Organization & Structure
+
+1.  **Follow the established modular structure:** `src/pages` (or `src/modules`), `src/components`, `src/store`, `src/hooks`, `src/utils`, `src/types`.
+2.  **Group related components** within feature modules or a shared `components` directory.
+3.  **Separate type definitions** into `src/types` or within the relevant module's directory.
+4.  **Organize Redux logic** into slices (`src/store/slices/featureSlice.ts`). Use selectors for derived state.
+5.  **Create reusable custom hooks** (`src/hooks`) for shared logic.
+6.  **Place utility functions** (e.g., formatting, calculations) in `src/utils`.
+7.  **Keep components focused:** Separate concerns (UI, state logic, side effects). Consider Presentational/Container patterns or hook-based logic separation.
+
+### React/TypeScript Best Practices
+
+1.  **Use TypeScript consistently** for type safety (props, state, function signatures, Redux state). Use `interface` or `type` as appropriate.
+2.  **Follow the Rules of Hooks.**
+3.  **Ensure immutability,** especially when working with state (Redux reducers, `useState`).
+4.  **Use functional components** with Hooks.
+5.  **Optimize rendering:** Use `React.memo`, `useCallback`, `useMemo` where appropriate, but justify their use.
+6.  **Handle errors gracefully:** Use try/catch for potential issues in calculations or logic, consider React Error Boundaries for UI.
+7.  **Manage side effects** correctly using `useEffect`. Clean up subscriptions or timers.
+8.  **Use meaningful names** for variables, functions, components, and props.
+
+### Redux Best Practices
+
+1.  **Use Redux Toolkit (`configureStore`, `createSlice`).**
+2.  **Keep reducers pure** and handle state updates immutably.
+3.  **Use selectors (`createSelector` from Reselect/RTK)** for reading derived state to optimize performance.
+4.  **Normalize state shape** where appropriate (e.g., using IDs as keys in objects instead of arrays for easier lookups).
+5.  **Dispatch actions** from components or hooks. For async logic, consider `createAsyncThunk` if/when backend interaction is added.
+
+### Material-UI (MUI) Usage
+
+1.  **Utilize MUI components** for UI consistency.
+2.  **Leverage the theme** (`src/theme.ts`) for styling customization.
+3.  **Layout Workaround:** Prefer using MUI `Box` with flexbox (`display: 'flex', flexWrap: 'wrap', gap: ...`) for grid-like layouts instead of the MUI `Grid` component. This is due to persistent TypeScript errors encountered with `Grid` props (`item`, `xs`, `sm`) in the current project setup (MUI v7, React 19, TS 5.7). Use `Stack` for simple vertical or horizontal arrangements where appropriate.
+
+### Testing
+
+1.  **Write unit/integration tests** using Jest and React Testing Library for critical components, hooks, utility functions, and Redux logic.
+2.  **Focus tests on behavior,** not implementation details.

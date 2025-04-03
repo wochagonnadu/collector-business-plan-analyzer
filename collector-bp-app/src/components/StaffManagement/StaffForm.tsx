@@ -1,0 +1,171 @@
+import React from 'react';
+import { useDispatch } from 'react-redux';
+import { Formik, Form } from 'formik';
+import MuiTextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Box from '@mui/material/Box';
+// import Grid from '@mui/material/Grid'; // Убираем Grid
+import { StaffType } from '../../types/staff';
+import { addStaff, updateStaff } from '../../store/slices/staffSlice';
+import * as Yup from 'yup'; // Импортируем Yup
+
+interface StaffFormProps {
+  initialValues?: StaffType;
+  onClose: () => void;
+}
+
+// // Схема валидации Yup
+const validationSchema = Yup.object({
+  group: Yup.string().required('Группа обязательна'),
+  position: Yup.string().required('Должность обязательна'),
+  count: Yup.number().required('Количество обязательно').min(1, 'Минимум 1 сотрудник').integer('Должно быть целым числом'),
+  salary: Yup.number().required('Оклад обязателен').min(0, 'Оклад не может быть отрицательным'),
+  workingHours: Yup.number().required('Рабочие часы обязательны').min(1, 'Минимум 1 час').integer('Должно быть целым числом'),
+  efficiencyRatio: Yup.number()
+    .required('Коэффициент эффективности обязателен')
+    .min(0.1, 'Минимум 0.1')
+    .max(1.0, 'Максимум 1.0'),
+});
+
+// // Компонент формы для добавления/редактирования персонала (используем Box вместо Grid)
+const StaffForm: React.FC<StaffFormProps> = ({ initialValues, onClose }) => {
+  const dispatch = useDispatch();
+  const isEditing = !!initialValues;
+
+  const formInitialValues: Omit<StaffType, 'id'> = initialValues
+    ? { ...initialValues }
+    : {
+        group: '',
+        position: '',
+        count: 1,
+        salary: 50000,
+        workingHours: 160,
+        efficiencyRatio: 0.85,
+      };
+
+  const handleSubmit = (values: Omit<StaffType, 'id'>) => {
+    if (isEditing && initialValues) {
+      console.log('Обновление сотрудника:', { id: initialValues.id, ...values });
+      dispatch(updateStaff({ id: initialValues.id, ...values }));
+    } else {
+      console.log('Добавление сотрудника:', values);
+      dispatch(addStaff(values));
+    }
+    onClose();
+  };
+
+  return (
+    <Formik
+      initialValues={formInitialValues}
+      validationSchema={validationSchema} // Подключаем схему валидации
+      onSubmit={handleSubmit}
+      enableReinitialize
+    >
+      {({ values, handleChange, handleBlur, touched, errors, isSubmitting }) => (
+        <Form noValidate>
+          {/* // Используем Box с flexbox для разметки */}
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+            {/* // Каждое поле в своем Box */}
+            <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}> {/* // 50% ширины минус половина gap */}
+              <MuiTextField
+                name="group"
+                label="Группа"
+                value={values.group}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                error={touched.group && Boolean(errors.group)}
+                helperText={touched.group && errors.group}
+                fullWidth
+                required
+              />
+            </Box>
+            <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}> {/* // 50% ширины минус половина gap */}
+              <MuiTextField
+                name="position"
+                label="Должность"
+                value={values.position}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                error={touched.position && Boolean(errors.position)}
+                helperText={touched.position && errors.position}
+                fullWidth
+                required
+              />
+            </Box>
+            <Box sx={{ width: { xs: '100%', sm: 'calc(33.33% - 11px)' } }}> {/* // ~1/3 ширины */}
+              <MuiTextField
+                name="count"
+                label="Количество"
+                type="number"
+                value={values.count}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                error={touched.count && Boolean(errors.count)}
+                helperText={touched.count && errors.count}
+                fullWidth
+                required
+                InputProps={{ inputProps: { min: 1 } }}
+              />
+            </Box>
+            <Box sx={{ width: { xs: '100%', sm: 'calc(33.33% - 11px)' } }}> {/* // ~1/3 ширины */}
+              <MuiTextField
+                name="salary"
+                label="Оклад (₽)"
+                type="number"
+                value={values.salary}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                error={touched.salary && Boolean(errors.salary)}
+                helperText={touched.salary && errors.salary}
+                fullWidth
+                required
+                InputProps={{ inputProps: { min: 0 } }}
+              />
+            </Box>
+            <Box sx={{ width: { xs: '100%', sm: 'calc(33.33% - 11px)' } }}> {/* // ~1/3 ширины */}
+              <MuiTextField
+                name="workingHours"
+                label="Часы/мес"
+                type="number"
+                value={values.workingHours}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                error={touched.workingHours && Boolean(errors.workingHours)}
+                helperText={touched.workingHours && errors.workingHours}
+                fullWidth
+                required
+                InputProps={{ inputProps: { min: 1 } }}
+              />
+            </Box>
+            <Box sx={{ width: '100%' }}> {/* // Полная ширина */}
+              <MuiTextField
+                name="efficiencyRatio"
+                label="Эффективность (0.1-1.0)"
+                type="number"
+                value={values.efficiencyRatio}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                error={touched.efficiencyRatio && Boolean(errors.efficiencyRatio)}
+                helperText={touched.efficiencyRatio && errors.efficiencyRatio}
+                fullWidth
+                required
+                InputProps={{ inputProps: { step: 0.01, min: 0.1, max: 1.0 } }}
+              />
+            </Box>
+          </Box>
+          {/* // Кнопки отправки и отмены */}
+          <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+            <Button onClick={onClose} sx={{ mr: 1 }}>
+              Отмена
+            </Button>
+            <Button type="submit" variant="contained" disabled={isSubmitting}>
+              {isEditing ? 'Сохранить изменения' : 'Добавить сотрудника'}
+            </Button>
+          </Box>
+        </Form>
+      )}
+    </Formik>
+  );
+};
+
+export default StaffForm;
