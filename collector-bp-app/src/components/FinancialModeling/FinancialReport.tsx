@@ -1,8 +1,9 @@
 import React from 'react';
 import { useSelector } from 'react-redux'; // Импортируем useSelector
 import { RootState } from '../../store/store'; // Импортируем RootState
-// Импортируем расчеты и типы из нового модуля financialStatementCalculations
-import { generateCashFlow, generatePnL, MonthlyCashFlow, PnLData } from '../../utils/financialStatementCalculations';
+// // Импортируем расчеты и типы из новых модулей
+import { generateCashFlow, MonthlyCashFlow } from '../../utils/cashFlowCalculations'; // // Импорт CF
+import { generatePnL, PnLData } from '../../utils/pnlCalculations'; // // Импорт P&L
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import Box from '@mui/material/Box';
@@ -68,9 +69,9 @@ const FinancialReport: React.FC = () => {
                 <TableRow key={row.month}>
                   <TableCell>{row.month}</TableCell>
                   <TableCell align="right">{formatCurrency(row.inflow)}</TableCell>
-                  {/* // Исправляем доступ к полям трудозатрат в CF */}
+                  {/* // Используем новые поля трудозатрат и прочих затрат */}
                   <TableCell align="right">{formatCurrency(row.outflowLaborFixed + row.outflowLaborVariable)}</TableCell>
-                  <TableCell align="right">{formatCurrency(row.outflowOther)}</TableCell>
+                  <TableCell align="right">{formatCurrency(row.outflowOtherFixed + row.outflowOtherVariable + row.outflowCapital)}</TableCell> {/* // Суммируем все прочие для отображения */}
                   <TableCell align="right">{formatCurrency(row.outflowTotal)}</TableCell>
                   <TableCell align="right" sx={{ color: row.net < 0 ? 'error.main' : 'success.main' }}>
                     {formatCurrency(row.net)}
@@ -90,11 +91,12 @@ const FinancialReport: React.FC = () => {
             {/* // Исправляем доступ к полям трудозатрат в P&L */}
             <Typography variant="body1">Затраты на персонал (фикс): <strong>{formatCurrency(pnlData.totalLaborCostFixed)}</strong></Typography>
             <Typography variant="body1">Затраты на персонал (перемен.): <strong>{formatCurrency(pnlData.totalLaborCostVariable)}</strong></Typography>
-            <Typography variant="body1">Прочие затраты: <strong>{formatCurrency(pnlData.totalOtherCosts)}</strong></Typography>
+            <Typography variant="body1">Прочие операционные затраты: <strong>{formatCurrency(pnlData.totalOtherCosts)}</strong></Typography> {/* // Уточнено название */}
             <Typography variant="body1">Общие операционные затраты: <strong>{formatCurrency(pnlData.totalCosts)}</strong></Typography>
             <Divider sx={{ my: 1 }}/>
             <Typography variant="h6">Прибыль до налогов: <strong>{formatCurrency(pnlData.profitBeforeTax)}</strong></Typography>
-            <Typography variant="body1">Налог ({state.financials.currentParams.taxRate * 100}%): <strong>{formatCurrency(pnlData.taxAmount)}</strong></Typography>
+            {/* // Исправляем расчет процента налога */}
+            <Typography variant="body1">Налог ({state.financials.currentParams.taxRate}%): <strong>{formatCurrency(pnlData.taxAmount)}</strong></Typography>
             <Divider sx={{ my: 1 }}/>
             <Typography variant="h5" sx={{ color: pnlData.netProfit < 0 ? 'error.main' : 'success.main' }}>
                 Чистая прибыль: <strong>{formatCurrency(pnlData.netProfit)}</strong>

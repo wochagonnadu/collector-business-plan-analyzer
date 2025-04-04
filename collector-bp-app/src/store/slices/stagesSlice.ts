@@ -19,6 +19,7 @@ const initialState: StagesState = {
         { id: crypto.randomUUID(), name: 'Проверка и верификация', normative: 10, executorPosition: 'Оператор', repetitions: 1 },
         { id: crypto.randomUUID(), name: 'Внесение в CRM', normative: 5, executorPosition: 'Оператор', repetitions: 1 },
       ],
+      writeOffProbability: 0, // // Добавляем вероятность списания по умолчанию
     },
     {
       id: crypto.randomUUID(),
@@ -30,6 +31,7 @@ const initialState: StagesState = {
         { id: crypto.randomUUID(), name: 'Переговоры', normative: 20, executorPosition: 'Коллектор', repetitions: 2 },
         { id: crypto.randomUUID(), name: 'Внесение итогов в CRM', normative: 5, executorPosition: 'Коллектор', repetitions: 5 },
       ],
+      writeOffProbability: 0, // // Добавляем вероятность списания по умолчанию
     },
     {
       id: crypto.randomUUID(),
@@ -43,6 +45,7 @@ const initialState: StagesState = {
         { id: crypto.randomUUID(), name: 'Внесение итогов в CRM', normative: 5, executorPosition: 'Юрист', repetitions: 3 },
         // { id: crypto.randomUUID(), name: 'Внесение итогов в CRM', normative: 5, executorPosition: 'Оператор', repetitions: 3 }, // Дубликат? Уточнить. Пока закомментирован.
       ],
+      writeOffProbability: 0, // // Добавляем вероятность списания по умолчанию
     },
     {
       id: crypto.randomUUID(),
@@ -55,6 +58,7 @@ const initialState: StagesState = {
         { id: crypto.randomUUID(), name: 'Внесение итогов в CRM', normative: 5, executorPosition: 'Оператор', repetitions: 5 },
         // { id: crypto.randomUUID(), name: 'Внесение итогов в CRM', normative: 5, executorPosition: 'Коллектор', repetitions: 5 }, // Дубликат? Уточнить. Пока закомментирован.
       ],
+      writeOffProbability: 0, // // Добавляем вероятность списания по умолчанию
     },
     {
       id: crypto.randomUUID(),
@@ -66,6 +70,7 @@ const initialState: StagesState = {
         { id: crypto.randomUUID(), name: 'Мониторинг процедуры', normative: 30, executorPosition: 'Юрист', repetitions: 5 },
         { id: crypto.randomUUID(), name: 'Внесение итогов в CRM', normative: 5, executorPosition: 'Юрист', repetitions: 10 },
       ],
+      writeOffProbability: 0, // // Добавляем вероятность списания по умолчанию
     },
   ],
 };
@@ -76,10 +81,17 @@ const stagesSlice = createSlice({
   initialState, // Начальное состояние
   reducers: {
     // // Placeholder редьюсеры - будут реализованы позже
-    addStage: (state, action: PayloadAction<Omit<Stage, 'id' | 'subStages'>>) => {
+    // // Обновляем PayloadAction для addStage, чтобы он мог принимать writeOffProbability, но делаем его необязательным
+    addStage: (state, action: PayloadAction<Omit<Stage, 'id' | 'subStages' | 'writeOffProbability'> & { writeOffProbability?: number }>) => {
       // Логика добавления этапа
       console.log('Добавление этапа:', action.payload);
-      const newStage: Stage = { id: crypto.randomUUID(), ...action.payload, subStages: [] };
+      // // Устанавливаем writeOffProbability в 0, если оно не предоставлено
+      const newStage: Stage = {
+        id: crypto.randomUUID(),
+        ...action.payload,
+        subStages: [],
+        writeOffProbability: action.payload.writeOffProbability ?? 0, // // Инициализируем по умолчанию 0
+      };
       state.stageList.push(newStage);
     },
     updateStage: (state, action: PayloadAction<Stage>) => {

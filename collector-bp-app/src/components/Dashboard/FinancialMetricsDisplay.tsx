@@ -1,8 +1,9 @@
 import React, { useMemo } from 'react'; // Добавляем useMemo
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
-// Импортируем расчеты из новых модулей
-import { generateCashFlow, generatePnL } from '../../utils/financialStatementCalculations';
+// // Импортируем расчеты из новых модулей
+import { generateCashFlow } from '../../utils/cashFlowCalculations'; // // Исправлен путь импорта CF
+import { generatePnL } from '../../utils/pnlCalculations'; // // Исправлен путь импорта P&L
 import { calculateNPV, calculateIRR, calculateBreakEven, calculateEBITDA } from '../../utils/financialMetricsCalculations';
 import { calculateCostPerCase, calculateMaxCollectionTime, calculateOverallRecoveryRate } from '../../utils/processCalculations'; // Используем Max вместо Average
 import Typography from '@mui/material/Typography';

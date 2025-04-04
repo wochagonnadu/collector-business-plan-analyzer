@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
-// Импортируем расчет CF из нового модуля financialStatementCalculations
-import { generateCashFlow } from '../../utils/financialStatementCalculations';
+// // Импортируем расчеты из новых модулей
+import { generateCashFlow } from '../../utils/cashFlowCalculations'; // // Исправлен путь импорта
 // Импортируем компоненты Recharts
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import Typography from '@mui/material/Typography';

@@ -1,7 +1,7 @@
 import { RootState } from '../store/store';
 import { Stage } from '../types/stages';
-// Импортируем необходимые функции и типы из модуля финансовых отчетов
-import { generatePnL, PnLData } from './financialStatementCalculations';
+// // Импортируем PnL из нового файла
+import { generatePnL, PnLData } from './pnlCalculations'; // // Исправлен путь импорта
 import { distributeCases } from './laborCostCalculations'; // Для calculateAverageCollectionTime_DEPRECATED
 
 // // --- Расчеты времени и эффективности процесса ---
@@ -133,11 +133,181 @@ export const calculateOverallRecoveryRate = (state: RootState): number => {
   }
 
   // // Возвращаем итоговый результат в процентах (умножаем на 100)
-  const finalRate = weightedRecoveryRate * 100;
-  console.log('Расчет общего взвешенного процента взыскания:', finalRate);
-  // // TODO: Дальнейшее улучшение - симуляция потока дел между этапами
-  return finalRate;
+  // const finalRate = weightedRecoveryRate * 100; // // Старая логика расчета (до симуляции)
+  // console.log('Расчет общего взвешенного процента взыскания (старый):', finalRate); // // Оставляем для сравнения, если нужно
+
+  // // Используем новую функцию симуляции
+  const simulationResult = simulateCaseFlowAndRecovery(stageList, caseloadDistribution);
+  console.log('Расчет общего взвешенного процента взыскания (симуляция):', simulationResult);
+  return simulationResult;
+  // return finalRate; // // Старая логика удалена
 };
+
+
+// // --- Новая функция симуляции потока дел ---
+
+/**
+ * Вспомогательная функция для построения карты переходов между этапами.
+ * Ключ - ID этапа, Значение - массив ID этапов, которые идут *после* ключевого этапа.
+ * @param stageList - Список всех этапов.
+ * @returns Map<string, string[]> - Карта переходов.
+ */
+export const buildLeadsToMap = (stageList: Stage[]): Map<string, string[]> => { // // Добавляем export
+  const leadsToMap = new Map<string, string[]>();
+  const stageMap = new Map<string, Stage>(stageList.map(stage => [stage.id, stage]));
+
+  // // Инициализируем карту пустыми массивами для всех этапов
+  stageList.forEach(stage => {
+    leadsToMap.set(stage.id, []);
+  });
+
+  // // Заполняем карту на основе зависимостей dependsOn
+  stageList.forEach(stage => {
+    if (stage.dependsOn) {
+      stage.dependsOn.forEach(depId => {
+        if (leadsToMap.has(depId)) {
+          leadsToMap.get(depId)!.push(stage.id);
+        } else {
+           // // Это не должно происходить, если все dependsOn ID существуют в stageList
+           console.warn(`Этап ${stage.id} зависит от несуществующего этапа ${depId}`);
+        }
+      });
+    }
+  });
+
+  return leadsToMap;
+};
+
+
+/**
+ * Симулирует поток дел через этапы для расчета общего процента взыскания.
+ * Использует BFS (поиск в ширину) для обхода графа этапов.
+ * @param stageList - Список всех этапов.
+ * @param initialCaseloadDistribution - Начальное распределение дел по этапам (%).
+ * @returns Общий процент успешно взысканных дел (0-100).
+ */
+const simulateCaseFlowAndRecovery = (
+  stageList: Stage[],
+  initialCaseloadDistribution: { [stageId: string]: number }
+): number => {
+  if (stageList.length === 0 || Object.keys(initialCaseloadDistribution).length === 0) {
+    return 0;
+  }
+
+  const stageMap = new Map<string, Stage>(stageList.map(stage => [stage.id, stage]));
+  const leadsToMap = buildLeadsToMap(stageList); // // Карта переходов: stageId -> [nextStageId1, nextStageId2]
+
+  let totalRecoveredPercentage = 0; // // Общий накопленный процент взыскания
+  const casesEnteringStage = new Map<string, number>(); // // Процент дел, входящих в каждый этап
+  const queue: string[] = []; // // Очередь этапов для обработки (BFS)
+  const visitedInPath = new Set<string>(); // // Для обнаружения циклов в текущем пути обработки (хотя BFS менее подвержен бесконечным циклам, чем DFS, но проверка полезна)
+  const MAX_ITERATIONS = stageList.length * stageList.length; // // Ограничение на всякий случай
+  let iterations = 0;
+
+
+  // // 1. Инициализация: Заполняем входящий поток для начальных этапов и добавляем их в очередь
+  for (const stageId in initialCaseloadDistribution) {
+    if (Object.prototype.hasOwnProperty.call(initialCaseloadDistribution, stageId) && stageMap.has(stageId)) {
+      const initialPercentage = initialCaseloadDistribution[stageId];
+      if (initialPercentage > 0) {
+        casesEnteringStage.set(stageId, (casesEnteringStage.get(stageId) || 0) + initialPercentage);
+        if (!queue.includes(stageId)) { // // Добавляем в очередь только один раз
+           queue.push(stageId);
+        }
+      }
+    } else {
+       console.warn(`Начальное распределение указывает на несуществующий этап: ${stageId}`);
+    }
+  }
+
+  // // 2. Симуляция (BFS)
+  while (queue.length > 0 && iterations < MAX_ITERATIONS) {
+    iterations++;
+    const currentStageId = queue.shift()!; // // Берем первый этап из очереди
+
+    // // Проверка на цикл (хотя для BFS это менее критично, чем для DFS)
+    if (visitedInPath.has(currentStageId)) {
+        console.error(`Обнаружен возможный цикл при обработке этапа ${currentStageId}. Прерывание потока по этому пути.`);
+        continue; // // Пропускаем обработку этого этапа в данном цикле BFS
+    }
+    // visitedInPath.add(currentStageId); // // Отмечаем как посещенный в текущей "волне" BFS
+
+    const currentStage = stageMap.get(currentStageId);
+    const percentageEntering = casesEnteringStage.get(currentStageId) || 0;
+
+    if (!currentStage || percentageEntering <= 0) {
+      // visitedInPath.delete(currentStageId); // // Убираем отметку
+      continue; // // Пропускаем, если этап не найден или нет входящего потока
+    }
+
+    // // Получаем вероятности для текущего этапа (0-100)
+    const recoveryProb = currentStage.recoveryProbability ?? 0;
+    const writeOffProb = currentStage.writeOffProbability ?? 0;
+
+    // // Проверяем корректность суммы вероятностей
+    if (recoveryProb + writeOffProb > 100) {
+      console.error(`Сумма вероятностей для этапа ${currentStageId} (${currentStage.name}) превышает 100%. Используется скорректированное значение.`);
+      // // Корректируем, чтобы сумма не превышала 100, отдавая приоритет взысканию
+      const adjustedWriteOffProb = Math.max(0, 100 - recoveryProb);
+      // writeOffProb = adjustedWriteOffProb; // // Перезаписываем для расчета ниже
+       // // Лучше не перезаписывать, а использовать скорректированные значения локально
+       const localRecoveryProb = recoveryProb;
+       const localWriteOffProb = adjustedWriteOffProb;
+
+       // // Расчеты с локальными скорректированными вероятностями
+       const recoveredHere = percentageEntering * (localRecoveryProb / 100);
+       const writtenOffHere = percentageEntering * (localWriteOffProb / 100);
+       const transitioningPercentage = Math.max(0, percentageEntering - recoveredHere - writtenOffHere); // // Оставшийся процент для перехода
+
+       totalRecoveredPercentage += recoveredHere; // // Добавляем к общему взысканию
+
+       // // Распределение переходящего процента на следующие этапы
+       const nextStageIds = leadsToMap.get(currentStageId) || [];
+       if (transitioningPercentage > 1e-9 && nextStageIds.length > 0) { // // Используем малое число для сравнения с 0 из-за плавающей точки
+         const percentagePerNextStage = transitioningPercentage / nextStageIds.length; // // Упрощенное распределение: делим поровну
+         nextStageIds.forEach(nextId => {
+           if (stageMap.has(nextId)) {
+             casesEnteringStage.set(nextId, (casesEnteringStage.get(nextId) || 0) + percentagePerNextStage);
+             if (!queue.includes(nextId)) { // // Добавляем в очередь, если еще не там
+               queue.push(nextId);
+             }
+           }
+         });
+       }
+
+    } else {
+       // // Стандартный расчет
+       const recoveredHere = percentageEntering * (recoveryProb / 100);
+       const writtenOffHere = percentageEntering * (writeOffProb / 100);
+       const transitioningPercentage = Math.max(0, percentageEntering * ((100 - recoveryProb - writeOffProb) / 100));
+
+       totalRecoveredPercentage += recoveredHere; // // Добавляем к общему взысканию
+
+       // // Распределение переходящего процента на следующие этапы
+       const nextStageIds = leadsToMap.get(currentStageId) || [];
+       if (transitioningPercentage > 1e-9 && nextStageIds.length > 0) { // // Используем малое число для сравнения с 0
+         const percentagePerNextStage = transitioningPercentage / nextStageIds.length; // // Упрощенное распределение: делим поровну
+         nextStageIds.forEach(nextId => {
+           if (stageMap.has(nextId)) {
+             casesEnteringStage.set(nextId, (casesEnteringStage.get(nextId) || 0) + percentagePerNextStage);
+             if (!queue.includes(nextId)) {
+               queue.push(nextId);
+             }
+           }
+         });
+       }
+    }
+     // visitedInPath.delete(currentStageId); // // Убираем отметку после обработки этапа и его потомков в этой волне BFS
+  } // // конец while
+
+   if (iterations >= MAX_ITERATIONS) {
+     console.error("Симуляция потока дел прервана из-за превышения максимального числа итераций. Возможен сложный цикл или ошибка в логике.");
+   }
+
+  // // Возвращаем итоговый процент взыскания
+  return totalRecoveredPercentage;
+};
+
 
 /**
  * Рассчитывает среднюю стоимость взыскания одного успешно завершенного дела.

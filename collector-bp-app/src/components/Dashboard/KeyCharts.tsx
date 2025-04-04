@@ -1,8 +1,9 @@
 import React, { useMemo } from 'react';
 import { useSelector } from 'react-redux'; // Импортируем useSelector
 import { RootState } from '../../store/store'; // Импортируем RootState
-// Импортируем расчеты из нового модуля financialStatementCalculations
-import { generateCashFlow, generatePnL } from '../../utils/financialStatementCalculations';
+// // Импортируем расчеты из новых модулей
+import { generateCashFlow } from '../../utils/cashFlowCalculations'; // // Исправлен путь импорта CF
+import { generatePnL } from '../../utils/pnlCalculations'; // // Исправлен путь импорта P&L
 // Импортируем компоненты Recharts
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
