@@ -7,6 +7,8 @@ import FinancialParamsConfig from '../../components/FinancialModeling/FinancialP
 import FinancialReport from '../../components/FinancialModeling/FinancialReport';
 import ScenarioComparison from '../../components/FinancialModeling/ScenarioComparison';
 import TimelineVisualizer from '../../components/FinancialModeling/TimelineVisualizer';
+import CaseloadDistributionConfig from '../../components/LaborCost/CaseloadDistributionConfig';
+import DistributionVisualizer from '../../components/LaborCost/DistributionVisualizer'; // Импортируем визуализатор
 // // Можно добавить импорт для метрик типа BreakEven, IRR, NPV, EBITDA, CostPerCase
 // import FinancialMetricsDisplay from '../../components/FinancialModeling/FinancialMetricsDisplay';
 
@@ -24,6 +26,8 @@ const FinancialModelingPage: React.FC = () => {
       {/* // Компоненты конфигурации */}
       <DebtPortfolioConfig />
       <FinancialParamsConfig />
+      <CaseloadDistributionConfig />
+      <DistributionVisualizer /> {/* // Добавляем визуализатор распределения caseload */}
 
       {/* // Компонент для отображения отчетов */}
       <FinancialReport />

@@ -16,6 +16,7 @@ import * as Yup from 'yup';
 const validationSchema = Yup.object({
   discountRate: Yup.number().required('Обязательно').min(0, 'Не может быть меньше 0').max(1, 'Не может быть больше 1'),
   taxRate: Yup.number().required('Обязательно').min(0, 'Не может быть меньше 0').max(1, 'Не может быть больше 1'),
+  depreciationPeriodYears: Yup.number().required('Обязательно').integer('Должно быть целым числом').min(1, 'Должен быть минимум 1 год'), // // Валидация для срока амортизации
 });
 
 // // Компонент для конфигурации финансовых параметров
@@ -56,6 +57,15 @@ const FinancialParamsConfig: React.FC = () => {
                   value={values.taxRate} onChange={handleChange} onBlur={handleBlur}
                   error={touched.taxRate && Boolean(errors.taxRate)} helperText={touched.taxRate && errors.taxRate}
                   fullWidth required InputProps={{ inputProps: { step: 0.01, min: 0, max: 1 } }}
+                />
+              </Box>
+              {/* // Добавляем поле для срока амортизации */}
+              <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}>
+                <MuiTextField
+                  name="depreciationPeriodYears" label="Срок амортизации (лет)" type="number"
+                  value={values.depreciationPeriodYears} onChange={handleChange} onBlur={handleBlur}
+                  error={touched.depreciationPeriodYears && Boolean(errors.depreciationPeriodYears)} helperText={touched.depreciationPeriodYears && errors.depreciationPeriodYears}
+                  fullWidth required InputProps={{ inputProps: { step: 1, min: 1 } }}
                 />
               </Box>
               <Box sx={{ width: '100%', mt: 2, display: 'flex', justifyContent: 'flex-end' }}>

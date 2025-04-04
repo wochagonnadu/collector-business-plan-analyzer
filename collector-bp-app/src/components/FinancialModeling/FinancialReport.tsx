@@ -1,23 +1,37 @@
 import React from 'react';
-// import { useSelector } from 'react-redux';
-// import { RootState } from '../../store/store';
-// import { generateCashFlow, generatePnL } from '../../utils/calculations'; // Импортируем позже
+import { useSelector } from 'react-redux'; // Импортируем useSelector
+import { RootState } from '../../store/store'; // Импортируем RootState
+// Импортируем расчеты и типы из нового модуля financialStatementCalculations
+import { generateCashFlow, generatePnL, MonthlyCashFlow, PnLData } from '../../utils/financialStatementCalculations';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import Box from '@mui/material/Box';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
+import Divider from '@mui/material/Divider'; // Импортируем Divider
+// // Добавляем компоненты для таблицы
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
 
-// // Placeholder компонент для отображения финансовых отчетов (CF, P&L)
+// // Компонент для отображения финансовых отчетов (CF, P&L)
 const FinancialReport: React.FC = () => {
   const [selectedTab, setSelectedTab] = React.useState(0);
 
-  // // Получаем state для расчетов (позже)
-  // const state = useSelector((state: RootState) => state);
-  // const cashFlowData = generateCashFlow(state);
-  // const pnlData = generatePnL(state);
+  // // Получаем state и рассчитываем данные
+  const state = useSelector((state: RootState) => state);
+  // // Используем useMemo для кэширования расчетов, чтобы они не выполнялись при каждом рендере
+  const cashFlowData: MonthlyCashFlow[] = React.useMemo(() => generateCashFlow(state), [state]);
+  const pnlData: PnLData = React.useMemo(() => generatePnL(state), [state]);
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  // // Хелпер для форматирования чисел
+  const formatCurrency = (value: number) => value.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+  // // Обработчик смены вкладок. Параметр event не используется, поэтому добавляем префикс _
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setSelectedTab(newValue);
   };
 
@@ -36,15 +50,55 @@ const FinancialReport: React.FC = () => {
 
       {/* // Отображаем контент в зависимости от выбранной вкладки */}
       {selectedTab === 0 && (
-        <Box sx={{ color: 'text.secondary' }}>
-          <Typography variant="body2">(Таблица/график Cash Flow будет здесь)</Typography>
-          {/* // TODO: Отобразить cashFlowData */}
-        </Box>
+        <TableContainer>
+          <Table size="small" aria-label="cash flow table">
+            <TableHead>
+              <TableRow>
+                <TableCell>Месяц</TableCell>
+                <TableCell align="right">Доход</TableCell>
+                <TableCell align="right">Расход (Персонал)</TableCell>
+                <TableCell align="right">Расход (Прочие)</TableCell>
+                <TableCell align="right">Расход (Итого)</TableCell>
+                <TableCell align="right">Чистый поток</TableCell>
+                <TableCell align="right">Накопленный поток</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {cashFlowData.map((row) => (
+                <TableRow key={row.month}>
+                  <TableCell>{row.month}</TableCell>
+                  <TableCell align="right">{formatCurrency(row.inflow)}</TableCell>
+                  {/* // Исправляем доступ к полям трудозатрат в CF */}
+                  <TableCell align="right">{formatCurrency(row.outflowLaborFixed + row.outflowLaborVariable)}</TableCell>
+                  <TableCell align="right">{formatCurrency(row.outflowOther)}</TableCell>
+                  <TableCell align="right">{formatCurrency(row.outflowTotal)}</TableCell>
+                  <TableCell align="right" sx={{ color: row.net < 0 ? 'error.main' : 'success.main' }}>
+                    {formatCurrency(row.net)}
+                  </TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 'bold', color: row.cumulative < 0 ? 'error.main' : 'inherit' }}>
+                    {formatCurrency(row.cumulative)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
       )}
       {selectedTab === 1 && (
-        <Box sx={{ color: 'text.secondary' }}>
-          <Typography variant="body2">(Таблица Profit & Loss будет здесь)</Typography>
-          {/* // TODO: Отобразить pnlData */}
+         <Box sx={{ '& > :not(style)': { mt: 1 } }}> {/* // Добавляем отступы между строками P&L */}
+            <Typography variant="body1">Общая выручка: <strong>{formatCurrency(pnlData.totalRevenue)}</strong></Typography>
+            {/* // Исправляем доступ к полям трудозатрат в P&L */}
+            <Typography variant="body1">Затраты на персонал (фикс): <strong>{formatCurrency(pnlData.totalLaborCostFixed)}</strong></Typography>
+            <Typography variant="body1">Затраты на персонал (перемен.): <strong>{formatCurrency(pnlData.totalLaborCostVariable)}</strong></Typography>
+            <Typography variant="body1">Прочие затраты: <strong>{formatCurrency(pnlData.totalOtherCosts)}</strong></Typography>
+            <Typography variant="body1">Общие операционные затраты: <strong>{formatCurrency(pnlData.totalCosts)}</strong></Typography>
+            <Divider sx={{ my: 1 }}/>
+            <Typography variant="h6">Прибыль до налогов: <strong>{formatCurrency(pnlData.profitBeforeTax)}</strong></Typography>
+            <Typography variant="body1">Налог ({state.financials.currentParams.taxRate * 100}%): <strong>{formatCurrency(pnlData.taxAmount)}</strong></Typography>
+            <Divider sx={{ my: 1 }}/>
+            <Typography variant="h5" sx={{ color: pnlData.netProfit < 0 ? 'error.main' : 'success.main' }}>
+                Чистая прибыль: <strong>{formatCurrency(pnlData.netProfit)}</strong>
+            </Typography>
         </Box>
       )}
     </Paper>

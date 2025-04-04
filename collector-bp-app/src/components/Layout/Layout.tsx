@@ -42,6 +42,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       </AppBar>
 
       {/* // Основная область для контента страниц */}
+      {/* // Убираем maxWidth для использования большей ширины экрана */}
       <Container component="main" sx={{ mt: 4, mb: 4, flexGrow: 1 }}>
         {children} {/* // Отображаем дочерний компонент (текущую страницу) */}
       </Container>

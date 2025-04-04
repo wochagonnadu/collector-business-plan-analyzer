@@ -1,6 +1,8 @@
-import React from 'react';
-import { useSelector } from 'react-redux';
+import React, { useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../store/store';
+import { deleteStage, deleteSubStage } from '../../store/slices/stagesSlice';
+import { Stage, SubStage } from '../../types/stages'; // Импортируем SubStage
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
@@ -16,19 +18,83 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import Button from '@mui/material/Button';
+import Modal from '@mui/material/Modal';
+import StageForm from './StageForm';
+import SubStageForm from './SubStageForm'; // Импортируем форму подэтапа
 
 // // Компонент для конфигурации этапов взыскания
 const StagesConfigurator: React.FC = () => {
-  // // Получаем список этапов из Redux store
+  const dispatch = useDispatch();
   const stageList = useSelector((state: RootState) => state.stages.stageList);
 
-  // // Placeholder обработчики
-  const handleEditStage = (stageId: string) => console.log('Edit stage:', stageId);
-  const handleDeleteStage = (stageId: string) => console.log('Delete stage:', stageId);
-  const handleAddSubStage = (stageId: string) => console.log('Add sub-stage to:', stageId);
-  const handleEditSubStage = (stageId: string, subStageId: string) => console.log('Edit sub-stage:', stageId, subStageId);
-  const handleDeleteSubStage = (stageId: string, subStageId: string) => console.log('Delete sub-stage:', stageId, subStageId);
-  const handleAddStage = () => console.log('Add new stage');
+  const [isStageFormOpen, setIsStageFormOpen] = useState(false);
+  const [editingStage, setEditingStage] = useState<Stage | undefined>(undefined);
+
+  // // Состояния для модального окна формы ПОДэтапа
+  const [isSubStageFormOpen, setIsSubStageFormOpen] = useState(false);
+  const [editingSubStage, setEditingSubStage] = useState<SubStage | undefined>(undefined);
+  const [currentStageIdForSubStage, setCurrentStageIdForSubStage] = useState<string | null>(null);
+
+  // // Placeholder обработчики для подэтапов (пока без форм) - ЗАМЕНЯЕМ НА РЕАЛЬНЫЕ
+  // const handleAddSubStage = (stageId: string) => console.log('Add sub-stage to:', stageId);
+  // const handleEditSubStage = (stageId: string, subStageId: string) => console.log('Edit sub-stage:', stageId, subStageId);
+
+  // // Открытие формы для добавления ПОДэтапа
+  const handleAddSubStageClick = (stageId: string) => {
+    setCurrentStageIdForSubStage(stageId);
+    setEditingSubStage(undefined);
+    setIsSubStageFormOpen(true);
+  };
+
+   // // Открытие формы для редактирования ПОДэтапа
+  const handleEditSubStageClick = (stageId: string, subStageId: string) => {
+     const stage = stageList.find(s => s.id === stageId);
+     const subStage = stage?.subStages.find(ss => ss.id === subStageId);
+     if (subStage) {
+       setCurrentStageIdForSubStage(stageId);
+       setEditingSubStage(subStage);
+       setIsSubStageFormOpen(true);
+     }
+  };
+
+  // // Закрытие формы ПОДэтапа
+  const handleCloseSubStageForm = () => {
+    setIsSubStageFormOpen(false);
+    setEditingSubStage(undefined);
+    setCurrentStageIdForSubStage(null);
+  };
+
+  // // Открытие формы для добавления нового этапа
+  const handleAddStage = () => {
+    setEditingStage(undefined);
+    setIsStageFormOpen(true);
+  };
+
+  // // Открытие формы для редактирования существующего этапа
+  const handleEditStage = (stage: Stage) => {
+    setEditingStage(stage);
+    setIsStageFormOpen(true);
+  };
+
+   // // Закрытие формы этапа
+  const handleCloseStageForm = () => {
+    setIsStageFormOpen(false);
+    setEditingStage(undefined);
+  };
+
+  // // Реализуем удаление этапа
+  const handleDeleteStage = (stageId: string) => {
+    if (window.confirm('Вы уверены, что хотите удалить этот этап со всеми подэтапами?')) {
+      dispatch(deleteStage(stageId));
+    }
+  };
+
+  // // Реализуем удаление подэтапа
+  const handleDeleteSubStage = (stageId: string, subStageId: string) => {
+     if (window.confirm('Вы уверены, что хотите удалить этот подэтап?')) {
+      dispatch(deleteSubStage({ stageId, subStageId }));
+    }
+  };
 
   return (
     <Box>
@@ -51,7 +117,8 @@ const StagesConfigurator: React.FC = () => {
                 {`Сроки: ${stage.durationDays.min}-${stage.durationDays.max} дн.`}
               </Typography>
               <Box sx={{ ml: 'auto' }}> {/* // Кнопки справа */}
-                <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleEditStage(stage.id); }}>
+                {/* // Передаем объект stage в handleEditStage */}
+                <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleEditStage(stage); }}>
                   <EditIcon fontSize="inherit" />
                 </IconButton>
                 <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleDeleteStage(stage.id); }} color="error">
@@ -69,7 +136,8 @@ const StagesConfigurator: React.FC = () => {
                     disableGutters // Убираем боковые отступы ListItem
                     secondaryAction={
                       <>
-                        <IconButton edge="end" aria-label="edit" size="small" sx={{ mr: 0.5 }} onClick={() => handleEditSubStage(stage.id, subStage.id)}>
+                        {/* // Вызываем handleEditSubStageClick */}
+                        <IconButton edge="end" aria-label="edit" size="small" sx={{ mr: 0.5 }} onClick={() => handleEditSubStageClick(stage.id, subStage.id)}>
                           <EditIcon fontSize="inherit" />
                         </IconButton>
                         <IconButton edge="end" aria-label="delete" size="small" color="error" onClick={() => handleDeleteSubStage(stage.id, subStage.id)}>
@@ -87,12 +155,58 @@ const StagesConfigurator: React.FC = () => {
                 </React.Fragment>
               ))}
             </List>
-            <Button size="small" startIcon={<AddIcon />} onClick={() => handleAddSubStage(stage.id)} sx={{ mt: 1 }}>
+             {/* // Вызываем handleAddSubStageClick */}
+            <Button size="small" startIcon={<AddIcon />} onClick={() => handleAddSubStageClick(stage.id)} sx={{ mt: 1 }}>
               Добавить подэтап
             </Button>
           </AccordionDetails>
         </Accordion>
       ))}
+
+      {/* // Модальное окно для формы этапа */}
+      <Modal
+        open={isStageFormOpen}
+        onClose={handleCloseStageForm}
+        aria-labelledby="stage-form-modal-title"
+      >
+        <Box sx={{
+          position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+          width: { xs: '90%', sm: 500 }, bgcolor: 'background.paper',
+          border: '1px solid #ccc', boxShadow: 24, p: 4, borderRadius: 1,
+        }}>
+          <Typography id="stage-form-modal-title" variant="h6" component="h2" sx={{ mb: 2 }}>
+            {editingStage ? 'Редактировать этап' : 'Добавить новый этап'}
+          </Typography>
+          <StageForm
+            initialValues={editingStage}
+            onClose={handleCloseStageForm}
+          />
+        </Box>
+      </Modal>
+
+       {/* // Модальное окно для формы ПОДэтапа */}
+       {currentStageIdForSubStage && ( // Рендерим только если есть ID родительского этапа
+         <Modal
+           open={isSubStageFormOpen}
+           onClose={handleCloseSubStageForm}
+           aria-labelledby="substage-form-modal-title"
+         >
+           <Box sx={{
+             position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+             width: { xs: '90%', sm: 550 }, bgcolor: 'background.paper', // Чуть шире
+             border: '1px solid #ccc', boxShadow: 24, p: 4, borderRadius: 1,
+           }}>
+             <Typography id="substage-form-modal-title" variant="h6" component="h2" sx={{ mb: 2 }}>
+               {editingSubStage ? 'Редактировать подэтап' : 'Добавить новый подэтап'}
+             </Typography>
+             <SubStageForm
+               stageId={currentStageIdForSubStage} // Передаем ID родителя
+               initialValues={editingSubStage}
+               onClose={handleCloseSubStageForm}
+             />
+           </Box>
+         </Modal>
+       )}
     </Box>
   );
 };
