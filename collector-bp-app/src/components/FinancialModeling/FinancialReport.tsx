@@ -25,11 +25,55 @@ const FinancialReport: React.FC = () => {
   // // Получаем state и рассчитываем данные
   const state = useSelector((state: RootState) => state);
   // // Используем useMemo для кэширования расчетов, чтобы они не выполнялись при каждом рендере
-  const cashFlowData: MonthlyCashFlow[] = React.useMemo(() => generateCashFlow(state), [state]);
-  const pnlData: PnLData = React.useMemo(() => generatePnL(state), [state]);
+  // // Получаем параметры для передачи в расчеты
+  const { stageList } = state.stages;
+  const { currentPortfolio, currentParams, caseloadDistribution } = state.financials;
+  const { staffList } = state.staff;
+  const { costList } = state.costs;
+
+  // // Используем useMemo для кэширования расчетов
+  // // Передаем currentParams в generateCashFlow
+  const cashFlowData: MonthlyCashFlow[] = React.useMemo(() => generateCashFlow(
+    stageList, currentPortfolio, currentParams, caseloadDistribution, staffList, costList
+  ), [stageList, currentPortfolio, currentParams, caseloadDistribution, staffList, costList]);
+
+  // // Передаем currentParams в generatePnL, получаем массив годовых P&L
+  const yearlyPnlData: PnLData[] = React.useMemo(() => generatePnL(
+    cashFlowData, currentParams
+  ), [cashFlowData, currentParams]);
+
+  // // Рассчитываем итоговые P&L показатели за весь срок проекта
+  const totalPnlData = React.useMemo(() => {
+    if (!yearlyPnlData || yearlyPnlData.length === 0) {
+      // // Возвращаем нулевые значения, если P&L не рассчитан
+      return {
+        totalRevenue: 0, totalLaborCostFixed: 0, totalLaborCostVariable: 0,
+        totalOtherCostsFixed: 0, totalOtherCostsVariable: 0, totalCapitalCostsExpensed: 0,
+        totalOperatingCosts: 0, profitBeforeTax: 0, taxAmount: 0, netProfit: 0,
+      };
+    }
+    // // Суммируем годовые показатели
+    return yearlyPnlData.reduce((acc, yearData) => ({
+      totalRevenue: acc.totalRevenue + yearData.totalRevenue,
+      totalLaborCostFixed: acc.totalLaborCostFixed + yearData.totalLaborCostFixed,
+      totalLaborCostVariable: acc.totalLaborCostVariable + yearData.totalLaborCostVariable,
+      totalOtherCostsFixed: acc.totalOtherCostsFixed + yearData.totalOtherCostsFixed,
+      totalOtherCostsVariable: acc.totalOtherCostsVariable + yearData.totalOtherCostsVariable,
+      totalCapitalCostsExpensed: acc.totalCapitalCostsExpensed + yearData.totalCapitalCostsExpensed, // Суммируем, хотя значение только в 1-й год
+      totalOperatingCosts: acc.totalOperatingCosts + yearData.totalOperatingCosts,
+      profitBeforeTax: acc.profitBeforeTax + yearData.profitBeforeTax,
+      taxAmount: acc.taxAmount + yearData.taxAmount,
+      netProfit: acc.netProfit + yearData.netProfit,
+    }), { // // Начальные значения аккумулятора
+      totalRevenue: 0, totalLaborCostFixed: 0, totalLaborCostVariable: 0,
+      totalOtherCostsFixed: 0, totalOtherCostsVariable: 0, totalCapitalCostsExpensed: 0,
+      totalOperatingCosts: 0, profitBeforeTax: 0, taxAmount: 0, netProfit: 0,
+    });
+  }, [yearlyPnlData]);
+
 
   // // Хелпер для форматирования чисел
-  const formatCurrency = (value: number) => value.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  const formatCurrency = (value: number) => value?.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 0, maximumFractionDigits: 0 }) ?? 'N/A';
 
   // // Обработчик смены вкладок. Параметр event не используется, поэтому добавляем префикс _
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
@@ -86,22 +130,24 @@ const FinancialReport: React.FC = () => {
         </TableContainer>
       )}
       {selectedTab === 1 && (
-         <Box sx={{ '& > :not(style)': { mt: 1 } }}> {/* // Добавляем отступы между строками P&L */}
-            <Typography variant="body1">Общая выручка: <strong>{formatCurrency(pnlData.totalRevenue)}</strong></Typography>
-            {/* // Исправляем доступ к полям трудозатрат в P&L */}
-            <Typography variant="body1">Затраты на персонал (фикс): <strong>{formatCurrency(pnlData.totalLaborCostFixed)}</strong></Typography>
-            <Typography variant="body1">Затраты на персонал (перемен.): <strong>{formatCurrency(pnlData.totalLaborCostVariable)}</strong></Typography>
-            <Typography variant="body1">Прочие операционные затраты: <strong>{formatCurrency(pnlData.totalOtherCosts)}</strong></Typography> {/* // Уточнено название */}
-            <Typography variant="body1">Общие операционные затраты: <strong>{formatCurrency(pnlData.totalCosts)}</strong></Typography>
+         <Box sx={{ '& > :not(style)': { mt: 1 } }}> {/* // Отображаем суммарные P&L данные */}
+            <Typography variant="body1">Общая выручка (за {currentParams.projectDurationYears} г.): <strong>{formatCurrency(totalPnlData.totalRevenue)}</strong></Typography>
+            <Typography variant="body1">Затраты на персонал (фикс): <strong>{formatCurrency(totalPnlData.totalLaborCostFixed)}</strong></Typography>
+            <Typography variant="body1">Затраты на персонал (перемен.): <strong>{formatCurrency(totalPnlData.totalLaborCostVariable)}</strong></Typography>
+            <Typography variant="body1">Прочие операционные затраты (фикс): <strong>{formatCurrency(totalPnlData.totalOtherCostsFixed)}</strong></Typography>
+            <Typography variant="body1">Прочие операционные затраты (перемен.): <strong>{formatCurrency(totalPnlData.totalOtherCostsVariable)}</strong></Typography>
+            <Typography variant="body1">Списанные капитальные затраты (в 1-й год): <strong>{formatCurrency(totalPnlData.totalCapitalCostsExpensed)}</strong></Typography>
+            <Typography variant="body1">Общие операционные затраты: <strong>{formatCurrency(totalPnlData.totalOperatingCosts)}</strong></Typography>
             <Divider sx={{ my: 1 }}/>
-            <Typography variant="h6">Прибыль до налогов: <strong>{formatCurrency(pnlData.profitBeforeTax)}</strong></Typography>
-            {/* // Исправляем расчет процента налога */}
-            <Typography variant="body1">Налог ({state.financials.currentParams.taxRate}%): <strong>{formatCurrency(pnlData.taxAmount)}</strong></Typography>
+            <Typography variant="h6">Прибыль до налогов: <strong>{formatCurrency(totalPnlData.profitBeforeTax)}</strong></Typography>
+            {/* // Отображаем ставку налога корректно */}
+            <Typography variant="body1">Налог ({currentParams.taxRate * 100}%): <strong>{formatCurrency(totalPnlData.taxAmount)}</strong></Typography>
             <Divider sx={{ my: 1 }}/>
-            <Typography variant="h5" sx={{ color: pnlData.netProfit < 0 ? 'error.main' : 'success.main' }}>
-                Чистая прибыль: <strong>{formatCurrency(pnlData.netProfit)}</strong>
+            <Typography variant="h5" sx={{ color: totalPnlData.netProfit < 0 ? 'error.main' : 'success.main' }}>
+                Чистая прибыль (за {currentParams.projectDurationYears} г.): <strong>{formatCurrency(totalPnlData.netProfit)}</strong>
             </Typography>
-        </Box>
+            {/* // TODO: Добавить отображение P&L по годам, если нужно */}
+         </Box>
       )}
     </Paper>
   );

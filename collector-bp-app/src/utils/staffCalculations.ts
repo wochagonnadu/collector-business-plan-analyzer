@@ -38,18 +38,38 @@ export const calculateSubStageExecutionCost = (subStage: SubStage, staffList: St
   return effectiveTimeHours * hourlyRate;
 };
 
+/**
+ * Рассчитывает эффективное время выполнения одного подэтапа одним сотрудником в часах (с учетом эффективности).
+ * @param subStage - Объект подэтапа.
+ * @param staffList - Список всех типов сотрудников.
+ * @returns Эффективное время выполнения в часах или 0, если исполнитель не найден.
+ */
+export const calculateSubStageEffectiveHours = (subStage: SubStage, staffList: StaffType[]): number => {
+  // // Находим исполнителя для данного подэтапа
+  const executor = staffList.find(staff => staff.position === subStage.executorPosition);
+  if (!executor) return 0; // // Если исполнитель не найден, время равно 0
+
+  // // Рассчитываем фактор эффективности из процента (например, 85% -> 0.85), минимум 0.01
+  const efficiencyFactor = Math.max(0.01, (executor.efficiencyPercent || 100) / 100); // // Используем efficiencyPercent, по умолчанию 100%
+  // // Рассчитываем эффективное время выполнения в часах (норматив в минутах / 60 / эффективность)
+  const effectiveTimeHours = (subStage.normative / 60) / efficiencyFactor;
+  // // Возвращаем эффективное время выполнения в часах
+  return effectiveTimeHours;
+};
+
 
 /**
- * Рассчитывает общую доступную годовую производственную мощность персонала в часах.
+ * Рассчитывает общую доступную **месячную** производственную мощность персонала в часах.
  * @param staffList - Список всех типов сотрудников.
- * @returns Общее количество доступных рабочих часов в год.
+ * @returns Общее количество доступных рабочих часов в **месяц**.
  */
-export const calculateTotalAnnualWorkHours = (staffList: StaffType[]): number => {
-  let totalAnnualHours = 0;
+export const calculateAvailableMonthlyWorkHours = (staffList: StaffType[]): number => {
+  // // Переименовано из calculateTotalAnnualWorkHours и убран множитель 12
+  let totalMonthlyHours = 0;
   staffList.forEach(staff => {
-    // // Годовые часы = кол-во сотрудников * часы в месяц * 12 месяцев
-    totalAnnualHours += staff.count * staff.workingHours * 12;
+    // // Месячные часы = кол-во сотрудников * часы в месяц
+    totalMonthlyHours += staff.count * staff.workingHours;
   });
-  console.log('Расчет общей годовой мощности (часы):', totalAnnualHours);
-  return totalAnnualHours;
+  // // console.log('Расчет общей месячной мощности (часы):', totalMonthlyHours); // Можно раскомментировать для отладки
+  return totalMonthlyHours;
 };

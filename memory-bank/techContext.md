@@ -27,6 +27,9 @@
 
 *   **Library:** React Router (v6 or latest stable)
 
+## 6a. Financial Calculations
+*   **IRR Calculation:** `irr` (small library for Internal Rate of Return)
+
 ## 7. Development & Build Tools
 
 *   **Build Tool / Dev Server:** Vite (for fast development and optimized builds)

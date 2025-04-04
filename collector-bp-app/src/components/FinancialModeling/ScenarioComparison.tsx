@@ -30,7 +30,8 @@ import { generatePnL } from '../../utils/pnlCalculations';
 import { calculateIRR, calculateNPV, calculateEBITDA, calculateBreakEven } from '../../utils/financialMetricsCalculations'; // // Добавляем calculateBreakEven
 import { calculateOverallRecoveryRate, calculateAverageCollectionTime } from '../../utils/processCalculations';
 import { calculateRequiredAnnualWorkloadHours } from '../../utils/laborCostCalculations';
-import { calculateTotalAnnualWorkHours } from '../../utils/staffCalculations';
+// // Импортируем переименованную функцию для месячной мощности
+import { calculateAvailableMonthlyWorkHours } from '../../utils/staffCalculations';
 
 // // Тип для хранения результатов сравнения
 interface ComparisonResult extends Scenario {
@@ -160,7 +161,8 @@ const ScenarioComparison: React.FC = () => {
           portfolio,
           caseloadDistribution
         );
-        const availableHours = calculateTotalAnnualWorkHours(staffList);
+        // // Рассчитываем годовую доступную мощность, умножая месячную на 12
+        const availableHours = calculateAvailableMonthlyWorkHours(staffList) * 12;
         const utilizationValue = availableHours > 0 ? requiredHours / availableHours : 0;
 
         // // 3. Сохраняем результаты

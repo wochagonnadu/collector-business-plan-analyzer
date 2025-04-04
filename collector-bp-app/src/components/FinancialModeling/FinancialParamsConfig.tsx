@@ -6,6 +6,11 @@ import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
+import FormControl from '@mui/material/FormControl';
+import FormLabel from '@mui/material/FormLabel';
+import RadioGroup from '@mui/material/RadioGroup';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Radio from '@mui/material/Radio';
 // import Grid from '@mui/material/Grid'; // Используем Box
 import { RootState } from '../../store/store';
 import { updateCurrentParams } from '../../store/slices/financialsSlice';
@@ -14,9 +19,9 @@ import * as Yup from 'yup';
 
 // // Схема валидации Yup для финансовых параметров
 const validationSchema = Yup.object({
-  discountRate: Yup.number().required('Обязательно').min(0, 'Не может быть меньше 0').max(1, 'Не может быть больше 1'),
-  taxRate: Yup.number().required('Обязательно').min(0, 'Не может быть меньше 0').max(1, 'Не может быть больше 1'),
-  depreciationPeriodYears: Yup.number().required('Обязательно').integer('Должно быть целым числом').min(1, 'Должен быть минимум 1 год'), // // Валидация для срока амортизации
+  discountRate: Yup.number().required('Обязательно').min(0, 'Не может быть меньше 0').max(1, 'Не может быть больше 1').typeError('Должно быть число (0-1)'),
+  taxRate: Yup.number().required('Обязательно').min(0, 'Не может быть меньше 0').max(1, 'Не может быть больше 1').typeError('Должно быть число (0-1)'),
+  projectDurationYears: Yup.number().oneOf([1, 2, 5], 'Выберите 1, 2 или 5').required('Обязательно'), // // Валидация для срока проекта
 });
 
 // // Компонент для конфигурации финансовых параметров
@@ -59,18 +64,31 @@ const FinancialParamsConfig: React.FC = () => {
                   fullWidth required InputProps={{ inputProps: { step: 0.01, min: 0, max: 1 } }}
                 />
               </Box>
-              {/* // Добавляем поле для срока амортизации */}
+              {/* // Добавляем поле для срока проекта */}
               <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}>
-                <MuiTextField
-                  name="depreciationPeriodYears" label="Срок амортизации (лет)" type="number"
-                  value={values.depreciationPeriodYears} onChange={handleChange} onBlur={handleBlur}
-                  error={touched.depreciationPeriodYears && Boolean(errors.depreciationPeriodYears)} helperText={touched.depreciationPeriodYears && errors.depreciationPeriodYears}
-                  fullWidth required InputProps={{ inputProps: { step: 1, min: 1 } }}
-                />
+                <FormControl component="fieldset" error={touched.projectDurationYears && Boolean(errors.projectDurationYears)}>
+                  <FormLabel component="legend">Срок проекта (лет)</FormLabel>
+                  <RadioGroup
+                    row
+                    aria-label="project-duration"
+                    name="projectDurationYears"
+                    value={values.projectDurationYears}
+                    onChange={handleChange} // Formik handles the string/number conversion
+                  >
+                    <FormControlLabel value="1" control={<Radio />} label="1" />
+                    <FormControlLabel value="2" control={<Radio />} label="2" />
+                    <FormControlLabel value="5" control={<Radio />} label="5" />
+                  </RadioGroup>
+                  {touched.projectDurationYears && errors.projectDurationYears && (
+                    <Typography variant="caption" color="error">
+                      {errors.projectDurationYears}
+                    </Typography>
+                  )}
+                </FormControl>
               </Box>
               <Box sx={{ width: '100%', mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
                 <Button type="submit" variant="contained" disabled={isSubmitting}>
-                  Сохранить параметры
+                  Сохранить параметры {/* Save Parameters */}
                 </Button>
               </Box>
             </Box>

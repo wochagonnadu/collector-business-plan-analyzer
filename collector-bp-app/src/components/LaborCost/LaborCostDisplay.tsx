@@ -6,7 +6,8 @@ import {
   calculateAnnualCaseloadLaborCost,
   calculateRequiredAnnualWorkloadHours,
 } from '../../utils/laborCostCalculations';
-import { calculateTotalAnnualWorkHours } from '../../utils/staffCalculations';
+// // Импортируем переименованную функцию для месячной мощности
+import { calculateAvailableMonthlyWorkHours } from '../../utils/staffCalculations';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import Box from '@mui/material/Box';
@@ -19,7 +20,13 @@ const LaborCostDisplay: React.FC = () => {
   const staffList = state.staff.staffList;
 
   // // 1. Расчет переменных трудозатрат (уже учитывает эффективность)
-  const annualVariableLaborCost = calculateAnnualCaseloadLaborCost(state);
+  // // Исправляем вызов, передавая отдельные части state вместо всего объекта
+  const annualVariableLaborCost = calculateAnnualCaseloadLaborCost(
+    staffList,
+    state.stages.stageList,
+    state.financials.currentPortfolio,
+    state.financials.caseloadDistribution
+  );
 
   // // 2. Расчет фиксированных трудозатрат (оклады)
   const annualFixedLaborCost = staffList.reduce((sum, s) => sum + s.salary * s.count * 12, 0);
@@ -28,8 +35,9 @@ const LaborCostDisplay: React.FC = () => {
   const totalAnnualLaborCost = annualFixedLaborCost + annualVariableLaborCost;
 
   // // 4. Расчет требуемой нагрузки и доступной мощности
-  const requiredHours = calculateRequiredAnnualWorkloadHours(state);
-  const availableHours = calculateTotalAnnualWorkHours(staffList);
+  const requiredHours = calculateRequiredAnnualWorkloadHours(staffList, state.stages.stageList, state.financials.currentPortfolio, state.financials.caseloadDistribution); // // Годовая требуемая нагрузка
+  // // Рассчитываем годовую доступную мощность, умножая месячную на 12
+  const availableHours = calculateAvailableMonthlyWorkHours(staffList) * 12; // // Годовая доступная мощность
 
   // // 5. Расчет утилизации
   const utilizationPercent = availableHours > 0 ? (requiredHours / availableHours) * 100 : 0;

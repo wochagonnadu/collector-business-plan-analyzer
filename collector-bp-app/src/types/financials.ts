@@ -2,14 +2,6 @@
 export interface DebtPortfolio {
   totalCases: number; // Общее количество дел
   averageDebtAmount: number; // Средняя сумма долга
-  // // Распределение вероятности взыскания по этапам (%)
-  recoveryProbability: {
-    preTrial: number; // Досудебное
-    judicial: number; // Судебное
-    enforcement: number; // Исполнительное производство
-    bankruptcy: number; // Банкротство
-    writeOff: number; // Безнадежные (списание)
-  };
   // // Распределение дел по этапам в начале (%)
   initialStageDistribution: {
     preTrial: number;
@@ -20,6 +12,8 @@ export interface DebtPortfolio {
   // // Сроки взыскания (могут быть сложнее, пока просто число)
   // // Возможно, это будет рассчитываться на основе этапов? Уточнить.
   collectionTimeline?: number; // Примерный общий срок в днях (опционально)
+  // // Добавляем стоимость покупки портфеля в % от номинала
+  portfolioPurchaseRate?: number; // // Процент от (totalCases * averageDebtAmount), например 30 для 30%
 }
 
 // // Финансовые параметры модели
@@ -27,8 +21,8 @@ export interface FinancialParams {
   discountRate: number; // Ставка дисконтирования (например, 0.1 для 10%)
   // // Параметры налогообложения (упрощенно)
   taxRate: number; // Налоговая ставка (например, 0.2 для 20%)
-  // // Срок амортизации капитальных затрат (в годах)
-  depreciationPeriodYears: number; // // Например, 5
+  // // Срок проекта в годах (1, 2 или 5)
+  projectDurationYears: 1 | 2 | 5; // // Например, 1
   // // Другие параметры могут быть добавлены по мере необходимости
 }
 

@@ -11,9 +11,16 @@ import Box from '@mui/material/Box';
 
 // // Компонент для визуализации таймлайна (пока показываем кумулятивный CF)
 const TimelineVisualizer: React.FC = () => {
-  const state = useSelector((state: RootState) => state);
-  // // Рассчитываем данные CF
-  const cashFlowData = useMemo(() => generateCashFlow(state), [state]);
+  // // Получаем нужные части state
+  const { stageList } = useSelector((state: RootState) => state.stages);
+  const { currentPortfolio, currentParams, caseloadDistribution } = useSelector((state: RootState) => state.financials);
+  const { staffList } = useSelector((state: RootState) => state.staff);
+  const { costList } = useSelector((state: RootState) => state.costs);
+
+  // // Рассчитываем данные CF, передавая правильные аргументы
+  const cashFlowData = useMemo(() => generateCashFlow(
+    stageList, currentPortfolio, currentParams, caseloadDistribution, staffList, costList
+  ), [stageList, currentPortfolio, currentParams, caseloadDistribution, staffList, costList]);
 
   // // Хелпер для форматирования Tooltip
   const formatTooltipCurrency = (value: number) =>

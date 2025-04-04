@@ -1,4 +1,4 @@
-import irr from 'irr'; // // Импортируем библиотеку для расчета IRR
+import * as irr from 'irr'; // // Импортируем библиотеку для расчета IRR (изменено)
 // // Убираем RootState, импортируем нужные типы
 // import { RootState } from '../store/store';
 import { StaffType } from '../types/staff';
@@ -109,8 +109,9 @@ export const calculateIRR = (cashFlowData: MonthlyCashFlow[], costList: CostItem
   const flows = [-initialInvestment, ...cashFlowData.map(cf => cf.net)];
 
   try {
-    // // 3. Вызываем функцию расчета IRR
-    const result = irr(flows);
+    // // 3. Вызываем функцию расчета IRR (используем .default, предполагая стандартный экспорт ES модуля)
+    // // Если это не сработает, можно попробовать irr.irr(flows)
+    const result = irr.default(flows);
     if (result === null) {
       console.warn('Не удалось рассчитать IRR (возможно, все денежные потоки отрицательны или нет смены знака).');
       return NaN;
@@ -157,25 +158,25 @@ export const calculateNPV = (cashFlowData: MonthlyCashFlow[], discountRate: numb
 };
 
 /**
- * Рассчитывает EBITDA (Прибыль до вычета процентов, налогов, износа и амортизации).
- * EBITDA = Прибыль до налогов + Проценты + Амортизация
- * @param pnlData - Рассчитанные данные P&L.
- * @param costList - Список затрат (для расчета амортизации).
- * @param depreciationPeriodYears - Срок амортизации (в годах).
- * @returns Значение EBITDA.
+ * Рассчитывает EBITDA (Прибыль до вычета процентов, налогов) для каждого года проекта.
+ * В этой модели, так как амортизация убрана, а капитальные затраты списаны в 1-й год P&L,
+ * EBITDA по сути становится EBIT (Прибыль до вычета процентов и налогов),
+ * но мы добавляем обратно списанные капитальные затраты для года 1, чтобы показать прибыль до их списания.
+ * @param yearlyPnlData - Массив годовых данных P&L.
+ * @returns Массив годовых значений EBITDA.
  */
-export const calculateEBITDA = (pnlData: PnLData, costList: CostItem[], depreciationPeriodYears: number): number => {
-  // // Рассчитываем годовую амортизацию
-  const annualDepreciationRate = depreciationPeriodYears > 0 ? 1 / depreciationPeriodYears : 0;
-  const annualDepreciationAmortization = costList.reduce((sum, cost) => {
-      if (cost.tag === 'Капитальные' && cost.periodicity === 'Одноразово') {
-          return sum + cost.amount * annualDepreciationRate;
-      }
-      return sum;
-  }, 0);
-  const interest = 0; // Placeholder
+export const calculateEBITDA = (yearlyPnlData: PnLData[]): number[] => {
+  const yearlyEBITDA: number[] = [];
+  const interest = 0; // Placeholder for interest expense if needed later
 
-  const ebitda = pnlData.profitBeforeTax + interest + annualDepreciationAmortization;
-  console.log('Расчет EBITDA:', ebitda);
-  return ebitda;
+  yearlyPnlData.forEach(pnlYear => {
+    // // EBITDA = Прибыль до налогов (PBT) + Списанные капитальные затраты + Проценты
+    // // PBT уже учитывает вычет операционных и списанных капитальных затрат.
+    // // Добавляем обратно списанные капитальные затраты, чтобы получить прибыль до их учета.
+    const ebitda = pnlYear.profitBeforeTax + pnlYear.totalCapitalCostsExpensed + interest;
+    yearlyEBITDA.push(ebitda);
+  });
+
+  console.log('Расчет годового EBITDA:', yearlyEBITDA);
+  return yearlyEBITDA;
 };

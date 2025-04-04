@@ -26,25 +26,19 @@ interface FinancialsState {
 const defaultPortfolio: DebtPortfolio = {
   totalCases: 1000,
   averageDebtAmount: 50000,
-  recoveryProbability: {
-    preTrial: 40,
-    judicial: 30,
-    enforcement: 15,
-    bankruptcy: 5,
-    writeOff: 10,
-  },
   initialStageDistribution: {
     preTrial: 70,
     judicial: 20,
     enforcement: 5,
     bankruptcy: 5,
   },
+  portfolioPurchaseRate: 30, // // Примерная ставка покупки портфеля 30%
 };
 
 const defaultParams: FinancialParams = {
   discountRate: 0.1, // 10%
   taxRate: 0.2, // 20%
-  depreciationPeriodYears: 5, // // Срок амортизации по умолчанию 5 лет
+  projectDurationYears: 1, // // Срок проекта по умолчанию 1 год
 };
 
 // // Начальное состояние
@@ -128,12 +122,12 @@ const financialsSlice = createSlice({
       state.currentPortfolio = defaultPortfolio;
       state.currentParams = defaultParams;
       state.activeScenarioId = null;
-      // // Сбрасываем и распределение caseload при сбросе к умолчаниям
-      // // Возможно, лучше инициализировать на основе defaultPortfolio.initialStageDistribution?
-      // // Пока оставим пустым, т.к. этапы могут измениться.
-      state.caseloadDistribution = {};
-      console.log('Настройки сброшены к значениям по умолчанию');
-    },
+    // // Сбрасываем и распределение caseload при сбросе к умолчаниям
+    // // Возможно, лучше инициализировать на основе defaultPortfolio.initialStageDistribution?
+    // // Пока оставим пустым, т.к. этапы могут измениться.
+    state.caseloadDistribution = {}; // // Сбрасываем и caseloadDistribution
+    console.log('Настройки сброшены к значениям по умолчанию');
+  },
      // // Редьюсер для синхронизации caseloadDistribution с текущими этапами
      // // Вызывается после загрузки/изменения этапов
      syncCaseloadDistribution: (state, action: PayloadAction<{ stageIds: string[] }>) => {

@@ -16,15 +16,45 @@ import Box from '@mui/material/Box';
 const KeyCharts: React.FC = () => {
   // // Получаем state и рассчитываем данные
   const state = useSelector((state: RootState) => state);
-  const cashFlowData = useMemo(() => generateCashFlow(state), [state]);
-  const pnlData = useMemo(() => generatePnL(state), [state]);
+  // // Получаем нужные части state
+  const { stageList } = state.stages;
+  const { currentPortfolio, currentParams, caseloadDistribution } = state.financials;
+  const { staffList } = state.staff;
+  const { costList } = state.costs;
 
-  // // Подготавливаем данные для BarChart P&L
-  const pnlChartData = [
-    { name: 'Выручка', value: pnlData.totalRevenue },
-    { name: 'Затраты', value: pnlData.totalCosts },
-    { name: 'Прибыль', value: pnlData.netProfit },
-  ];
+  // // Передаем currentParams в generateCashFlow
+  const cashFlowData = useMemo(() => generateCashFlow(
+    stageList, currentPortfolio, currentParams, caseloadDistribution, staffList, costList
+  ), [stageList, currentPortfolio, currentParams, caseloadDistribution, staffList, costList]);
+
+  // // Передаем currentParams в generatePnL, получаем массив годовых P&L
+  const yearlyPnlData = useMemo(() => generatePnL(
+    cashFlowData, currentParams
+  ), [cashFlowData, currentParams]);
+
+  // // Подготавливаем данные для BarChart P&L (суммируем за весь срок)
+  const totalPnlChartData = useMemo(() => {
+    if (!yearlyPnlData || yearlyPnlData.length === 0) {
+      return [
+        { name: 'Выручка', value: 0 },
+        { name: 'Затраты', value: 0 }, // // Используем операционные затраты + списанные капитальные
+        { name: 'Прибыль', value: 0 },
+      ];
+    }
+    const totals = yearlyPnlData.reduce((acc, yearData) => ({
+      totalRevenue: acc.totalRevenue + yearData.totalRevenue,
+      // // Для графика затрат суммируем операционные и списанные капитальные
+      totalCostsForChart: acc.totalCostsForChart + yearData.totalOperatingCosts + yearData.totalCapitalCostsExpensed,
+      netProfit: acc.netProfit + yearData.netProfit,
+    }), { totalRevenue: 0, totalCostsForChart: 0, netProfit: 0 });
+
+    return [
+      { name: 'Выручка', value: totals.totalRevenue },
+      { name: 'Затраты', value: totals.totalCostsForChart },
+      { name: 'Прибыль', value: totals.netProfit },
+    ];
+  }, [yearlyPnlData]);
+
 
   // // Хелпер для форматирования Tooltip
   const formatTooltipCurrency = (value: number) =>
@@ -57,9 +87,10 @@ const KeyCharts: React.FC = () => {
 
         {/* // График P&L Summary */}
          <Box sx={{ width: { xs: '100%', md: '40%' }, height: { xs: 250, md: '100%' } }}>
-           <Typography variant="subtitle2" align="center">P&L Summary (Год)</Typography>
+           <Typography variant="subtitle2" align="center">P&L Summary (за {currentParams.projectDurationYears} г.)</Typography> {/* // Обновляем заголовок */}
            <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={pnlChartData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+            {/* // Используем totalPnlChartData */}
+            <BarChart data={totalPnlChartData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis type="number" tickFormatter={(tick) => (tick / 1000).toLocaleString('ru-RU') + 'k'}/>
               <YAxis type="category" dataKey="name" width={80}/>

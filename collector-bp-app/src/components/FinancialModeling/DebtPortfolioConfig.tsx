@@ -16,17 +16,6 @@ import * as Yup from 'yup';
 const validationSchema = Yup.object({
   totalCases: Yup.number().required('Обязательно').min(0, 'Не может быть меньше 0').integer(),
   averageDebtAmount: Yup.number().required('Обязательно').min(0, 'Не может быть меньше 0'),
-  recoveryProbability: Yup.object({
-    preTrial: Yup.number().required('Обязательно').min(0).max(100),
-    judicial: Yup.number().required('Обязательно').min(0).max(100),
-    enforcement: Yup.number().required('Обязательно').min(0).max(100),
-    bankruptcy: Yup.number().required('Обязательно').min(0).max(100),
-    writeOff: Yup.number().required('Обязательно').min(0).max(100),
-  }).test('sum-recovery', 'Сумма вероятностей должна быть 100%', (value) => {
-    if (!value) return false;
-    const sum = (value.preTrial || 0) + (value.judicial || 0) + (value.enforcement || 0) + (value.bankruptcy || 0) + (value.writeOff || 0);
-    return Math.abs(sum - 100) < 0.01; // Допускаем небольшую погрешность
-  }),
   initialStageDistribution: Yup.object({
     preTrial: Yup.number().required('Обязательно').min(0).max(100),
     judicial: Yup.number().required('Обязательно').min(0).max(100),
@@ -35,9 +24,11 @@ const validationSchema = Yup.object({
   }).test('sum-distribution', 'Сумма распределения должна быть 100%', (value) => {
     if (!value) return false;
     const sum = (value.preTrial || 0) + (value.judicial || 0) + (value.enforcement || 0) + (value.bankruptcy || 0);
-    return Math.abs(sum - 100) < 0.01; // Допускаем небольшую погрешность
-  }),
-});
+     return Math.abs(sum - 100) < 0.01; // Допускаем небольшую погрешность
+   }),
+   // // Добавляем валидацию для нового поля
+   portfolioPurchaseRate: Yup.number().required('Обязательно').min(0, 'Не менее 0%').max(100, 'Не более 100%'),
+ });
 
 
 // // Компонент для конфигурации портфеля долгов (используем Box вместо Grid)
@@ -83,48 +74,17 @@ const DebtPortfolioConfig: React.FC = () => {
                   fullWidth required
                 />
               </Box>
-
-              {/* // Вероятность взыскания */}
-              <Box sx={{ width: '100%', mt: 2 }}>
-                 <Typography variant="subtitle1">Вероятность взыскания (%)</Typography>
+              {/* // Добавляем поле для ставки покупки портфеля */}
+              <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}>
+                <MuiTextField
+                  name="portfolioPurchaseRate" label="Ставка покупки портф. (%)" type="number" InputProps={{ inputProps: { min: 0, max: 100 } }}
+                  value={values.portfolioPurchaseRate ?? ''} // // Используем ?? '' для обработки undefined
+                  onChange={handleChange} onBlur={handleBlur}
+                  error={touched.portfolioPurchaseRate && Boolean(errors.portfolioPurchaseRate)} helperText={touched.portfolioPurchaseRate && errors.portfolioPurchaseRate}
+                  fullWidth required
+                />
               </Box>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, width: '100%' }}>
-                <Box sx={{ width: { xs: 'calc(50% - 8px)', sm: 'calc(20% - 13px)' } }}> {/* ~1/5 */}
-                  <MuiTextField name="recoveryProbability.preTrial" label="Досудебное" type="number" InputProps={{ inputProps: { min: 0, max: 100 } }}
-                    value={values.recoveryProbability.preTrial} onChange={handleChange} onBlur={handleBlur}
-                    error={touched.recoveryProbability?.preTrial && Boolean(errors.recoveryProbability?.preTrial)} helperText={touched.recoveryProbability?.preTrial && errors.recoveryProbability?.preTrial}
-                    fullWidth required />
-                </Box>
-                <Box sx={{ width: { xs: 'calc(50% - 8px)', sm: 'calc(20% - 13px)' } }}> {/* ~1/5 */}
-                  <MuiTextField name="recoveryProbability.judicial" label="Судебное" type="number" InputProps={{ inputProps: { min: 0, max: 100 } }}
-                    value={values.recoveryProbability.judicial} onChange={handleChange} onBlur={handleBlur}
-                    error={touched.recoveryProbability?.judicial && Boolean(errors.recoveryProbability?.judicial)} helperText={touched.recoveryProbability?.judicial && errors.recoveryProbability?.judicial}
-                    fullWidth required />
-                </Box>
-                <Box sx={{ width: { xs: 'calc(50% - 8px)', sm: 'calc(20% - 13px)' } }}> {/* ~1/5 */}
-                  <MuiTextField name="recoveryProbability.enforcement" label="Исполн." type="number" InputProps={{ inputProps: { min: 0, max: 100 } }}
-                    value={values.recoveryProbability.enforcement} onChange={handleChange} onBlur={handleBlur}
-                    error={touched.recoveryProbability?.enforcement && Boolean(errors.recoveryProbability?.enforcement)} helperText={touched.recoveryProbability?.enforcement && errors.recoveryProbability?.enforcement}
-                    fullWidth required />
-                </Box>
-                <Box sx={{ width: { xs: 'calc(50% - 8px)', sm: 'calc(20% - 13px)' } }}> {/* ~1/5 */}
-                  <MuiTextField name="recoveryProbability.bankruptcy" label="Банкротство" type="number" InputProps={{ inputProps: { min: 0, max: 100 } }}
-                    value={values.recoveryProbability.bankruptcy} onChange={handleChange} onBlur={handleBlur}
-                    error={touched.recoveryProbability?.bankruptcy && Boolean(errors.recoveryProbability?.bankruptcy)} helperText={touched.recoveryProbability?.bankruptcy && errors.recoveryProbability?.bankruptcy}
-                    fullWidth required />
-                </Box>
-                <Box sx={{ width: { xs: 'calc(50% - 8px)', sm: 'calc(20% - 13px)' } }}> {/* ~1/5 */}
-                  <MuiTextField name="recoveryProbability.writeOff" label="Списание" type="number" InputProps={{ inputProps: { min: 0, max: 100 } }}
-                    value={values.recoveryProbability.writeOff} onChange={handleChange} onBlur={handleBlur}
-                    error={touched.recoveryProbability?.writeOff && Boolean(errors.recoveryProbability?.writeOff)} helperText={touched.recoveryProbability?.writeOff && errors.recoveryProbability?.writeOff}
-                    fullWidth required />
-                </Box>
-              </Box>
-              {/* // Отображение общей ошибки суммы для recoveryProbability */}
-              {errors.recoveryProbability && typeof errors.recoveryProbability === 'string' && (
-                 <Box sx={{ width: '100%', color: 'error.main', fontSize: '0.75rem', mt: 1 }}>{errors.recoveryProbability}</Box>
-              )}
-
+              {/* // Вероятность взыскания - УДАЛЕНО */}
 
               {/* // Начальное распределение */}
                <Box sx={{ width: '100%', mt: 2 }}>
