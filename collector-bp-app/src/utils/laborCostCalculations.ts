@@ -1,4 +1,8 @@
-import { RootState } from '../store/store';
+// // Убираем RootState, импортируем нужные типы
+// import { RootState } from '../store/store';
+import { StaffType } from '../types/staff';
+import { Stage } from '../types/stages';
+import { DebtPortfolio } from '../types/financials';
 import { calculateSubStageExecutionCost } from './staffCalculations'; // Импортируем из нового модуля
 
 // // --- Расчеты трудозатрат ---
@@ -44,17 +48,28 @@ export const distributeCases = (
 /**
  * Рассчитывает общие годовые трудозатраты на основе распределения дел (caseload),
  * нормативного времени подэтапов, количества повторений и эффективности персонала.
- * @param state - Полное состояние Redux (для доступа к staff, stages, financials).
+ * @param staffList - Список персонала.
+ * @param stageList - Список этапов.
+ * @param portfolio - Данные портфеля.
+ * @param caseloadDistribution - Распределение дел по этапам.
  * @returns Общие годовые трудозатраты.
  */
-export const calculateAnnualCaseloadLaborCost = (state: RootState): number => {
-  const { staff, stages, financials } = state;
-  const { staffList } = staff;
-  const { stageList } = stages;
-  const { currentPortfolio, caseloadDistribution } = financials;
+export const calculateAnnualCaseloadLaborCost = (
+  staffList: StaffType[],
+  stageList: Stage[],
+  portfolio: DebtPortfolio,
+  caseloadDistribution: { [stageId: string]: number }
+): number => {
+  // // Используем аргументы вместо state
+  const currentPortfolio = portfolio; // // Переименовываем для ясности
 
-  // Проверяем наличие необходимых данных
-  if (!currentPortfolio || !caseloadDistribution || stageList.length === 0 || staffList.length === 0) {
+  // Проверяем наличие необходимых данных (используем аргументы)
+  if (
+    !currentPortfolio ||
+    !caseloadDistribution ||
+    !stageList || stageList.length === 0 ||
+    !staffList || staffList.length === 0
+   ) {
     return 0; // Возвращаем 0, если данных недостаточно
   }
 
@@ -80,4 +95,63 @@ export const calculateAnnualCaseloadLaborCost = (state: RootState): number => {
   console.log('Расчет годовых трудозатрат с caseload:', annualTotalCost);
   // Возвращаем общую годовую стоимость трудозатрат
   return annualTotalCost;
+};
+
+
+/**
+ * Рассчитывает общую требуемую годовую рабочую нагрузку в часах на основе
+ * распределения дел, нормативного времени подэтапов, повторений и эффективности персонала.
+ * @param staffList - Список персонала.
+ * @param stageList - Список этапов.
+ * @param portfolio - Данные портфеля.
+ * @param caseloadDistribution - Распределение дел по этапам.
+ * @returns Общая требуемая рабочая нагрузка в часах за год.
+ */
+export const calculateRequiredAnnualWorkloadHours = (
+  staffList: StaffType[],
+  stageList: Stage[],
+  portfolio: DebtPortfolio,
+  caseloadDistribution: { [stageId: string]: number }
+): number => {
+   // // Используем аргументы вместо state
+  const currentPortfolio = portfolio;
+
+  // // Проверяем наличие необходимых данных
+  if (
+    !currentPortfolio ||
+    !caseloadDistribution ||
+    !stageList || stageList.length === 0 ||
+    !staffList || staffList.length === 0
+  ) {
+    return 0; // // Возвращаем 0, если данных недостаточно
+  }
+
+  // // Распределяем общее количество дел по этапам
+  const casesPerStage = distributeCases(currentPortfolio.totalCases, caseloadDistribution);
+  let totalRequiredHours = 0; // // Инициализируем общие требуемые часы
+
+  // // Итерируем по каждому этапу
+  stageList.forEach(stage => {
+    const casesInThisStage = casesPerStage[stage.id] || 0; // // Получаем количество дел на данном этапе
+    if (casesInThisStage === 0) return; // // Пропускаем этап, если на нем нет дел
+
+    // // Итерируем по каждому подэтапу внутри этапа
+    stage.subStages.forEach(subStage => {
+      // // Находим исполнителя
+      const executor = staffList.find(s => s.position === subStage.executorPosition);
+      if (!executor) return; // // Пропускаем, если исполнитель не найден
+
+      // // Рассчитываем фактор эффективности
+      const efficiencyFactor = Math.max(0.01, (executor.efficiencyPercent || 100) / 100);
+      // // Рассчитываем эффективное время выполнения ОДНОГО подэтапа в часах
+      const effectiveTimeHoursPerExecution = (subStage.normative / 60) / efficiencyFactor;
+
+      // // Добавляем к общей нагрузке: время * кол-во дел * кол-во повторений
+      totalRequiredHours += effectiveTimeHoursPerExecution * casesInThisStage * subStage.repetitions;
+    });
+  });
+
+  console.log('Расчет требуемой годовой нагрузки (часы):', totalRequiredHours);
+  // // Возвращаем общую требуемую нагрузку в часах
+  return totalRequiredHours;
 };

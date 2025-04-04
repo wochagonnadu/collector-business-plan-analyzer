@@ -32,12 +32,20 @@ export interface FinancialParams {
   // // Другие параметры могут быть добавлены по мере необходимости
 }
 
-// // Структура для хранения одного сценария
+// // Импортируем типы из других модулей
+import { StaffType } from './staff';
+import { Stage } from './stages';
+import { CostItem } from './costs';
+
+// // Структура для хранения одного сценария (теперь включает все релевантные срезы состояния)
 export interface Scenario {
   id: string;
   name: string;
   portfolio: DebtPortfolio;
   params: FinancialParams;
-  // // Можно добавить сюда ссылки на конфигурации staff, stages, costs для этого сценария,
-  // // но это усложнит state management. Пока оставим так.
+  // // Добавляем полные копии состояний других срезов на момент сохранения
+  staffList: StaffType[];
+  stageList: Stage[];
+  costList: CostItem[];
+  caseloadDistribution: { [stageId: string]: number };
 }

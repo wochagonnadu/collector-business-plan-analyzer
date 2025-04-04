@@ -10,14 +10,16 @@ interface StaffState {
 // // Используем crypto.randomUUID() для генерации уникальных ID
 const initialState: StaffState = {
   staffList: [
-    { id: crypto.randomUUID(), group: 'Администрация', position: 'Директор', count: 1, salary: 200000, workingHours: 160, efficiencyRatio: 0.85 },
-    { id: crypto.randomUUID(), group: 'Полевая служба', position: 'Коллектор', count: 4, salary: 100000, workingHours: 160, efficiencyRatio: 0.85 },
-    { id: crypto.randomUUID(), group: 'Контакт-центр', position: 'Оператор', count: 4, salary: 100000, workingHours: 160, efficiencyRatio: 0.85 },
-    { id: crypto.randomUUID(), group: 'Аналитика', position: 'Аналитик', count: 1, salary: 150000, workingHours: 160, efficiencyRatio: 0.85 },
-    { id: crypto.randomUUID(), group: 'Клиентская служба', position: 'Менеджер', count: 1, salary: 150000, workingHours: 160, efficiencyRatio: 0.85 },
-    { id: crypto.randomUUID(), group: 'Комплаенс', position: 'Менеджер', count: 1, salary: 150000, workingHours: 160, efficiencyRatio: 0.85 },
-    { id: crypto.randomUUID(), group: 'Юридическая служба', position: 'Юрист', count: 1, salary: 150000, workingHours: 160, efficiencyRatio: 0.85 },
-    { id: crypto.randomUUID(), group: 'IT', position: 'Администратор', count: 1, salary: 150000, workingHours: 160, efficiencyRatio: 0.85 },
+    // // Заменяем efficiencyRatio на efficiencyPercent (например, 85 для 85%)
+    // // maxCaseload пока не задаем по умолчанию
+    { id: crypto.randomUUID(), group: 'Администрация', position: 'Директор', count: 1, salary: 200000, workingHours: 160, efficiencyPercent: 85 },
+    { id: crypto.randomUUID(), group: 'Полевая служба', position: 'Коллектор', count: 4, salary: 100000, workingHours: 160, efficiencyPercent: 85 },
+    { id: crypto.randomUUID(), group: 'Контакт-центр', position: 'Оператор', count: 4, salary: 100000, workingHours: 160, efficiencyPercent: 85 },
+    { id: crypto.randomUUID(), group: 'Аналитика', position: 'Аналитик', count: 1, salary: 150000, workingHours: 160, efficiencyPercent: 90 },
+    { id: crypto.randomUUID(), group: 'Клиентская служба', position: 'Менеджер', count: 1, salary: 150000, workingHours: 160, efficiencyPercent: 85 },
+    { id: crypto.randomUUID(), group: 'Комплаенс', position: 'Менеджер', count: 1, salary: 150000, workingHours: 160, efficiencyPercent: 90 },
+    { id: crypto.randomUUID(), group: 'Юридическая служба', position: 'Юрист', count: 1, salary: 150000, workingHours: 160, efficiencyPercent: 85 },
+    { id: crypto.randomUUID(), group: 'IT', position: 'Администратор', count: 1, salary: 150000, workingHours: 160, efficiencyPercent: 95 },
   ],
 };
 
@@ -45,14 +47,19 @@ const staffSlice = createSlice({
     },
     // // Редьюсер для удаления сотрудника по ID
     deleteStaff: (state, action: PayloadAction<string>) => {
-      // // Фильтруем массив, оставляя всех, кроме сотрудника с указанным ID
-      state.staffList = state.staffList.filter(staff => staff.id !== action.payload);
-    },
-  },
-});
+       // // Фильтруем массив, оставляя всех, кроме сотрудника с указанным ID
+       state.staffList = state.staffList.filter(staff => staff.id !== action.payload);
+     },
+     // // Редьюсер для полной замены списка сотрудников (для загрузки сценария)
+     setStaffList: (state, action: PayloadAction<StaffType[]>) => {
+       state.staffList = action.payload; // // Просто заменяем весь список
+       console.log('Список сотрудников полностью заменен (загрузка сценария).');
+     },
+   },
+ });
 
-// // Экспортируем actions для использования в компонентах
-export const { addStaff, updateStaff, deleteStaff } = staffSlice.actions;
+ // // Экспортируем actions для использования в компонентах
+ export const { addStaff, updateStaff, deleteStaff, setStaffList } = staffSlice.actions;
 
-// // Экспортируем редьюсер для добавления в store
+ // // Экспортируем редьюсер для добавления в store
 export default staffSlice.reducer;

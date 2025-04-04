@@ -1,6 +1,9 @@
-import { RootState } from '../store/store';
-// // Импортируем generateCashFlow из нового файла
-import { generateCashFlow } from './cashFlowCalculations';
+// // Убираем RootState, импортируем нужные типы
+// import { RootState } from '../store/store';
+// // Импортируем generateCashFlow из нового файла - НЕ НУЖНО, CF передается как аргумент
+// import { generateCashFlow } from './cashFlowCalculations';
+// // Импортируем тип MonthlyCashFlow
+import { MonthlyCashFlow } from './cashFlowCalculations';
 
 // // --- Расчеты P&L ---
 
@@ -21,13 +24,14 @@ export interface PnLData {
 /**
  * Генерирует годовой отчет о прибылях и убытках (P&L).
  * Использует данные из рассчитанного Cash Flow для суммирования доходов и затрат.
- * @param state - Полное состояние Redux.
+ * @param cashFlow - Предварительно рассчитанный массив данных Cash Flow за 12 месяцев.
+ * @param taxRate - Ставка налога (в процентах, например, 20).
  * @returns Объект PnLData с годовыми показателями.
  */
-export const generatePnL = (state: RootState): PnLData => {
-  // Генерируем CF, так как P&L базируется на его годовых суммах
-  const cashFlow = generateCashFlow(state); // // Используем импортированную функцию
-  const { taxRate } = state.financials.currentParams; // Получаем ставку налога
+export const generatePnL = (cashFlow: MonthlyCashFlow[], taxRate: number): PnLData => {
+  // // Используем переданный cashFlow вместо генерации внутри
+  // const cashFlow = generateCashFlow(state);
+  // const { taxRate } = state.financials.currentParams;
 
   // Суммируем показатели CF за год
   const totalRevenue = cashFlow.reduce((sum, month) => sum + month.inflow, 0);

@@ -1,5 +1,16 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit'; // // Импортируем createAsyncThunk
 import { DebtPortfolio, FinancialParams, Scenario } from '../../types/financials';
+// // Добавляем импорт типов для других срезов
+import { StaffType } from '../../types/staff';
+import { Stage } from '../../types/stages';
+import { CostItem } from '../../types/costs';
+// // Импортируем actions из других срезов
+import { setStaffList } from './staffSlice';
+import { setStageList } from './stagesSlice';
+import { setCostList } from './costsSlice';
+// // Импортируем типы для Thunk
+import { RootState, AppDispatch } from '../store';
+
 
 // // Определяем тип для состояния этого среза
 interface FinancialsState {
@@ -67,27 +78,42 @@ const financialsSlice = createSlice({
     updateCaseloadDistribution: (state, action: PayloadAction<{ [stageId: string]: number }>) => {
       state.caseloadDistribution = action.payload;
       console.log('Обновлено распределение caseload:', state.caseloadDistribution);
-    },
-    // // Сохранение текущих настроек как нового сценария
-    saveScenario: (state, action: PayloadAction<{ name: string }>) => {
-      const newScenario: Scenario = {
-        id: crypto.randomUUID(),
-        name: action.payload.name,
-        portfolio: { ...state.currentPortfolio }, // Копируем текущие настройки
-        params: { ...state.currentParams },     // Копируем текущие настройки
-      };
-      state.scenarios.push(newScenario);
-      console.log('Сценарий сохранен:', newScenario);
+     },
+     // // Сохранение текущих настроек как нового сценария
+     // // Обновляем тип PayloadAction для saveScenario
+     saveScenario: (state, action: PayloadAction<{
+       name: string;
+       staffList: StaffType[];
+       stageList: Stage[];
+       costList: CostItem[];
+       // caseloadDistribution берем из текущего состояния этого среза
+     }>) => {
+       const newScenario: Scenario = {
+         id: crypto.randomUUID(),
+         name: action.payload.name,
+         portfolio: { ...state.currentPortfolio }, // Копируем текущие настройки
+         params: { ...state.currentParams },     // Копируем текущие настройки
+         // // Добавляем копии других срезов из payload
+         staffList: JSON.parse(JSON.stringify(action.payload.staffList)), // // Глубокое копирование
+         stageList: JSON.parse(JSON.stringify(action.payload.stageList)), // // Глубокое копирование
+         costList: JSON.parse(JSON.stringify(action.payload.costList)),   // // Глубокое копирование
+         caseloadDistribution: { ...state.caseloadDistribution } // // Копируем из текущего состояния среза
+       };
+       state.scenarios.push(newScenario);
+       console.log('Сценарий сохранен:', newScenario);
     },
     // // Загрузка выбранного сценария в текущие настройки
     loadScenario: (state, action: PayloadAction<string>) => { // Принимаем ID сценария
       const scenarioToLoad = state.scenarios.find(s => s.id === action.payload);
-      if (scenarioToLoad) {
-        state.currentPortfolio = { ...scenarioToLoad.portfolio };
-        state.currentParams = { ...scenarioToLoad.params };
-        state.activeScenarioId = scenarioToLoad.id;
-        console.log('Сценарий загружен:', scenarioToLoad.name);
-      }
+       if (scenarioToLoad) {
+         state.currentPortfolio = { ...scenarioToLoad.portfolio };
+         state.currentParams = { ...scenarioToLoad.params };
+         // // Загружаем caseloadDistribution тоже
+         state.caseloadDistribution = { ...scenarioToLoad.caseloadDistribution };
+         state.activeScenarioId = scenarioToLoad.id;
+         console.log('Сценарий загружен (только финансы):', scenarioToLoad.name);
+         // // Важно: Загрузка staffList, stageList, costList должна происходить через Thunk/компонент
+       }
     },
     // // Удаление сценария
     deleteScenario: (state, action: PayloadAction<string>) => { // Принимаем ID сценария
@@ -161,5 +187,36 @@ export const {
   syncCaseloadDistribution, // Добавляем новый action
 } = financialsSlice.actions;
 
-// // Экспортируем редьюсер
-export default financialsSlice.reducer;
+ // // Экспортируем редьюсер
+ export default financialsSlice.reducer;
+
+
+ // // --- Thunk Action для загрузки полного сценария ---
+ export const loadScenarioAndDependencies = createAsyncThunk<
+   void, // // Тип возвращаемого значения (ничего не возвращаем)
+   string, // // Тип аргумента (ID сценария)
+   { dispatch: AppDispatch; state: RootState } // // Типы для dispatch и state
+ >(
+   'financials/loadScenarioAndDependencies', // // Имя действия
+   async (scenarioId, { dispatch, getState }) => {
+     // // 1. Диспатчим обычный loadScenario для обновления financialsSlice
+     dispatch(loadScenario(scenarioId));
+
+     // // 2. Получаем актуальное состояние после обновления financialsSlice
+     const state = getState();
+     const scenarioToLoad = state.financials.scenarios.find(s => s.id === scenarioId);
+
+     if (scenarioToLoad) {
+       // // 3. Диспатчим actions для замены состояния в других срезах
+       // // Используем глубокое копирование на всякий случай, хотя RTK должен справляться с иммутабельностью
+       dispatch(setStaffList(JSON.parse(JSON.stringify(scenarioToLoad.staffList))));
+       dispatch(setStageList(JSON.parse(JSON.stringify(scenarioToLoad.stageList))));
+       dispatch(setCostList(JSON.parse(JSON.stringify(scenarioToLoad.costList))));
+       // // caseloadDistribution уже загружен в loadScenario
+
+       console.log(`Полностью загружен сценарий: ${scenarioToLoad.name}`);
+     } else {
+       console.error(`Не удалось найти сценарий с ID: ${scenarioId} для полной загрузки.`);
+     }
+   }
+ );

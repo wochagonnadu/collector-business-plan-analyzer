@@ -132,11 +132,16 @@ const stagesSlice = createSlice({
       console.log('Удаление подэтапа:', action.payload);
       const stage = state.stageList.find(s => s.id === action.payload.stageId);
       if (stage) {
-        stage.subStages = stage.subStages.filter(ss => ss.id !== action.payload.subStageId);
-      }
-    },
-  },
-});
+         stage.subStages = stage.subStages.filter(ss => ss.id !== action.payload.subStageId);
+       }
+     },
+     // // Редьюсер для полной замены списка этапов (для загрузки сценария)
+     setStageList: (state, action: PayloadAction<Stage[]>) => {
+       state.stageList = action.payload; // // Просто заменяем весь список
+       console.log('Список этапов полностью заменен (загрузка сценария).');
+     },
+   },
+ });
 
 // // Экспортируем actions
 export const {
@@ -144,9 +149,10 @@ export const {
   updateStage,
   deleteStage,
   addSubStage,
-  updateSubStage,
-  deleteSubStage,
-} = stagesSlice.actions;
+   updateSubStage,
+   deleteSubStage,
+   setStageList, // // Добавляем сюда
+ } = stagesSlice.actions;
 
-// // Экспортируем редьюсер
+ // // Экспортируем редьюсер
 export default stagesSlice.reducer;

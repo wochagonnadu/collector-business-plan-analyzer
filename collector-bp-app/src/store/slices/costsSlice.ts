@@ -35,14 +35,19 @@ const costsSlice = createSlice({
     },
     // // Редьюсер для удаления затраты по ID
     deleteCost: (state, action: PayloadAction<string>) => {
-      console.log('Удаление затраты ID:', action.payload);
-      state.costList = state.costList.filter(cost => cost.id !== action.payload);
-    },
-  },
-});
+       console.log('Удаление затраты ID:', action.payload);
+       state.costList = state.costList.filter(cost => cost.id !== action.payload);
+     },
+     // // Редьюсер для полной замены списка затрат (для загрузки сценария)
+     setCostList: (state, action: PayloadAction<CostItem[]>) => {
+       state.costList = action.payload; // // Просто заменяем весь список
+       console.log('Список затрат полностью заменен (загрузка сценария).');
+     },
+   },
+ });
 
-// // Экспортируем actions
-export const { addCost, updateCost, deleteCost } = costsSlice.actions;
+ // // Экспортируем actions
+ export const { addCost, updateCost, deleteCost, setCostList } = costsSlice.actions;
 
-// // Экспортируем редьюсер
+ // // Экспортируем редьюсер
 export default costsSlice.reducer;

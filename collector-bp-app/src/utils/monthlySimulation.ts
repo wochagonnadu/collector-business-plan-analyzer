@@ -1,5 +1,8 @@
-import { RootState } from '../store/store';
+// // Убираем RootState, импортируем нужные типы
+// import { RootState } from '../store/store';
 import { Stage } from '../types/stages';
+import { StaffType } from '../types/staff';
+import { DebtPortfolio } from '../types/financials';
 import { calculateAnnualCaseloadLaborCost } from './laborCostCalculations';
 import { buildLeadsToMap, calculateOverallRecoveryRate } from './processCalculations';
 
@@ -15,25 +18,38 @@ export interface MonthlySimulationOutput {
 
 /**
  * Симулирует поток дел по месяцам для распределения дохода и переменных трудозатрат.
- * @param state - Полное состояние Redux.
+ * @param stageList - Список этапов.
+ * @param portfolio - Данные портфеля.
+ * @param caseloadDistribution - Распределение дел по этапам.
+ * @param staffList - Список персонала (для расчета затрат).
  * @returns Объект с массивами доходов и переменных трудозатрат по месяцам.
  */
-export const simulateMonthlyCaseFlow = (state: RootState): MonthlySimulationOutput => {
-  const { stageList } = state.stages;
-  const { currentPortfolio, caseloadDistribution } = state.financials;
+export const simulateMonthlyCaseFlow = (
+  stageList: Stage[],
+  portfolio: DebtPortfolio,
+  caseloadDistribution: { [stageId: string]: number },
+  staffList: StaffType[] // // Добавляем staffList для передачи в расчеты
+): MonthlySimulationOutput => {
+  // // Используем аргументы вместо state
+  // const { stageList } = state.stages;
+  // const { currentPortfolio, caseloadDistribution } = state.financials;
+  const currentPortfolio = portfolio; // // Переименовываем для ясности внутри функции
 
   // // Инициализация выходных массивов
   const monthlyInflows = Array(12).fill(0);
   const monthlyVariableLaborCosts = Array(12).fill(0);
+  // // Массив для отслеживания процента завершенной работы по месяцам (для распределения переменных затрат)
+  const monthlyWorkCompletionPercentage = Array(12).fill(0); // // Добавлено
 
-  // // Проверка на наличие данных
+  // // Проверка на наличие данных (используем переданные аргументы)
   if (
     !currentPortfolio ||
     !caseloadDistribution ||
     Object.keys(caseloadDistribution).length === 0 ||
-    stageList.length === 0
+    !stageList || stageList.length === 0 || // // Проверяем stageList
+    !staffList // // Проверяем staffList
   ) {
-    console.warn('Недостаточно данных для симуляции месячного потока дел.');
+    console.warn('Недостаточно данных (этапы, портфель, распределение, персонал) для симуляции месячного потока дел.');
     return { monthlyInflows, monthlyVariableLaborCosts };
   }
 
@@ -42,11 +58,13 @@ export const simulateMonthlyCaseFlow = (state: RootState): MonthlySimulationOutp
   const { totalCases, averageDebtAmount } = currentPortfolio;
 
   // // Рассчитываем общий ожидаемый доход
-  const overallRecoveryRate = calculateOverallRecoveryRate(state) / 100;
-  const totalExpectedRecoveryValue = totalCases * averageDebtAmount * overallRecoveryRate;
+  // // Передаем нужные данные в calculateOverallRecoveryRate
+  const overallRecoveryRateValue = calculateOverallRecoveryRate(stageList, caseloadDistribution) / 100;
+  const totalExpectedRecoveryValue = totalCases * averageDebtAmount * overallRecoveryRateValue;
 
   // // Рассчитываем годовые переменные трудозатраты
-  const annualVariableLaborCost = calculateAnnualCaseloadLaborCost(state);
+  // // Передаем нужные данные в calculateAnnualCaseloadLaborCost
+  const annualVariableLaborCost = calculateAnnualCaseloadLaborCost(staffList, stageList, portfolio, caseloadDistribution); // // Рассчитываем один раз
 
   // // Состояние симуляции: { stageId: { percentage: number, daysInStage: number } }
   let currentMonthState: { [stageId: string]: { percentage: number; daysInStage: number } } = {};
@@ -94,8 +112,14 @@ export const simulateMonthlyCaseFlow = (state: RootState): MonthlySimulationOutp
         const writtenOffPortion = percentageCompleting * (actualWriteOffProb / 100);
         const transitioningPortion = Math.max(0, percentageCompleting - recoveredPortion - writtenOffPortion);
 
-        if (month < 12 && overallRecoveryRate > 1e-9) {
-           monthlyInflows[month] += (recoveredPortion / overallRecoveryRate) * totalExpectedRecoveryValue;
+         // // Распределяем доход
+         if (month < 12 && overallRecoveryRateValue > 1e-9) {
+            monthlyInflows[month] += (recoveredPortion / overallRecoveryRateValue) * totalExpectedRecoveryValue;
+         }
+
+         // // Накапливаем процент завершенной работы для распределения затрат
+        if (month < 12) {
+            monthlyWorkCompletionPercentage[month] += percentageCompleting; // // Добавляем весь процент, завершивший этап в этом месяце
         }
 
         const nextStageIds = leadsToMap.get(stageId) || [];
@@ -120,10 +144,10 @@ export const simulateMonthlyCaseFlow = (state: RootState): MonthlySimulationOutp
       }
     }
 
-    if (month < 12 && annualVariableLaborCost > 0 && totalCases > 0) {
-       monthlyVariableLaborCosts[month] = annualVariableLaborCost / 12; // // Упрощенное распределение
-       // // TODO: Уточнить логику распределения переменных затрат - зависит ли она от стадии?
-    }
+    // // Убираем старое упрощенное распределение затрат
+    // if (month < 12 && annualVariableLaborCost > 0 && totalCases > 0) {
+    //    monthlyVariableLaborCosts[month] = annualVariableLaborCost / 12;
+    // }
 
     currentMonthState = nextMonthState;
     if (Object.keys(currentMonthState).length === 0) {
@@ -135,6 +159,22 @@ export const simulateMonthlyCaseFlow = (state: RootState): MonthlySimulationOutp
   if (Object.keys(currentMonthState).length > 0) {
      console.warn(`Симуляция месячного потока прервана после ${MAX_SIMULATION_MONTHS} месяцев.`);
   }
+
+  // // Распределяем годовые переменные трудозатраты пропорционально завершенной работе по месяцам
+  const totalWorkCompletionPercentage12Months = monthlyWorkCompletionPercentage.reduce((a, b) => a + b, 0);
+
+  if (annualVariableLaborCost > 0 && totalWorkCompletionPercentage12Months > 1e-9) {
+    for (let i = 0; i < 12; i++) {
+      monthlyVariableLaborCosts[i] = annualVariableLaborCost * (monthlyWorkCompletionPercentage[i] / totalWorkCompletionPercentage12Months);
+    }
+  } else if (annualVariableLaborCost > 0) {
+    // // Запасной вариант: если работа не завершалась в первые 12 мес, распределяем равномерно (или можно оставить 0)
+    console.warn("Работа не завершалась в первые 12 месяцев симуляции. Переменные трудозатраты распределены равномерно.");
+    for (let i = 0; i < 12; i++) {
+      monthlyVariableLaborCosts[i] = annualVariableLaborCost / 12;
+    }
+  }
+  // // Иначе monthlyVariableLaborCosts остается [0, 0, ...]
 
   // // Корректировка сумм для точности
   const totalSimulatedIncome = monthlyInflows.reduce((a, b) => a + b, 0);

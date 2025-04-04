@@ -1,6 +1,10 @@
-import { RootState } from '../store/store';
-// // Импортируем симуляцию из нового файла
+// // Убираем RootState, импортируем нужные типы
+// import { RootState } from '../store/store';
 import { simulateMonthlyCaseFlow } from './monthlySimulation';
+import { StaffType } from '../types/staff';
+import { CostItem } from '../types/costs';
+import { DebtPortfolio } from '../types/financials';
+import { Stage } from '../types/stages';
 
 // // --- Расчеты Cash Flow ---
 
@@ -23,18 +27,32 @@ export interface MonthlyCashFlow {
 /**
  * Генерирует годовой отчет о движении денежных средств (Cash Flow) по месяцам.
  * Учитывает доходы, фиксированные и переменные трудозатраты, прочие затраты.
- * @param state - Полное состояние Redux.
+ * @param stageList - Список этапов.
+ * @param portfolio - Данные портфеля.
+ * @param caseloadDistribution - Распределение дел по этапам.
+ * @param staffList - Список персонала.
+ * @param costList - Список затрат.
  * @returns Массив объектов MonthlyCashFlow за 12 месяцев.
  */
-export const generateCashFlow = (state: RootState): MonthlyCashFlow[] => {
-  const { staff, costs, financials, stages } = state;
-  const { staffList } = staff;
-  const { costList } = costs;
-  const { stageList } = stages;
-  const { currentPortfolio } = financials; // // currentParams не используется напрямую здесь
+export const generateCashFlow = (
+  stageList: Stage[],
+  portfolio: DebtPortfolio,
+  caseloadDistribution: { [stageId: string]: number },
+  staffList: StaffType[],
+  costList: CostItem[]
+): MonthlyCashFlow[] => {
+  // // Используем аргументы вместо state
+  const currentPortfolio = portfolio;
 
   // // Проверка на наличие необходимых данных
-  if (!currentPortfolio || stageList.length === 0) {
+  if (
+    !currentPortfolio ||
+    !stageList || stageList.length === 0 ||
+    !staffList ||
+    !costList ||
+    !caseloadDistribution
+  ) {
+    console.warn('Недостаточно данных для генерации Cash Flow.');
     return Array(12).fill(null).map((_, i) => ({
         month: i + 1, inflow: 0, outflowLaborFixed: 0, outflowLaborVariable: 0,
         outflowOtherFixed: 0, outflowOtherVariable: 0, outflowCapital: 0,
@@ -80,7 +98,13 @@ export const generateCashFlow = (state: RootState): MonthlyCashFlow[] => {
   });
 
   // 3. & 4. Расчет дохода и переменных трудозатрат через симуляцию
-  const simulationOutput = simulateMonthlyCaseFlow(state); // // Вызываем симуляцию
+  // // Передаем нужные аргументы в simulateMonthlyCaseFlow
+  const simulationOutput = simulateMonthlyCaseFlow(
+    stageList,
+    portfolio,
+    caseloadDistribution,
+    staffList
+  );
   const monthlyInflows = simulationOutput.monthlyInflows;
   const monthlyVariableLaborCosts = simulationOutput.monthlyVariableLaborCosts;
 

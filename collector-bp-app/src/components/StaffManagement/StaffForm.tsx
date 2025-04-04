@@ -21,10 +21,17 @@ const validationSchema = Yup.object({
   count: Yup.number().required('Количество обязательно').min(1, 'Минимум 1 сотрудник').integer('Должно быть целым числом'),
   salary: Yup.number().required('Оклад обязателен').min(0, 'Оклад не может быть отрицательным'),
   workingHours: Yup.number().required('Рабочие часы обязательны').min(1, 'Минимум 1 час').integer('Должно быть целым числом'),
-  efficiencyRatio: Yup.number()
-    .required('Коэффициент эффективности обязателен')
-    .min(0.1, 'Минимум 0.1')
-    .max(1.0, 'Максимум 1.0'),
+  // // Обновляем валидацию для efficiencyPercent
+  efficiencyPercent: Yup.number()
+    .required('Эффективность обязательна')
+    .min(1, 'Минимум 1%')
+    .max(100, 'Максимум 100%')
+    .integer('Должно быть целым числом'),
+  // // Добавляем валидацию для maxCaseload (опционально)
+  maxCaseload: Yup.number()
+    .min(0, 'Нагрузка не может быть отрицательной')
+    .integer('Должно быть целым числом')
+    .nullable(), // // Разрешаем null или undefined
 });
 
 // // Компонент формы для добавления/редактирования персонала (используем Box вместо Grid)
@@ -37,13 +44,16 @@ const StaffForm: React.FC<StaffFormProps> = ({ initialValues, onClose }) => {
     : {
         group: '',
         position: '',
-        count: 1,
-        salary: 50000,
-        workingHours: 160,
-        efficiencyRatio: 0.85,
-      };
+         count: 1,
+         salary: 50000,
+         workingHours: 160,
+         // efficiencyRatio: 0.85, // // Убираем старое поле
+         efficiencyPercent: 85, // // Добавляем новое поле с %
+         maxCaseload: undefined, // // Добавляем опциональное поле
+       };
 
-  const handleSubmit = (values: Omit<StaffType, 'id'>) => {
+   // // Убедимся, что тип values соответствует обновленному StaffType (Formik сделает это автоматически)
+   const handleSubmit = (values: Omit<StaffType, 'id'>) => {
     if (isEditing && initialValues) {
       console.log('Обновление сотрудника:', { id: initialValues.id, ...values });
       dispatch(updateStaff({ id: initialValues.id, ...values }));
@@ -135,25 +145,42 @@ const StaffForm: React.FC<StaffFormProps> = ({ initialValues, onClose }) => {
                 fullWidth
                 required
                 InputProps={{ inputProps: { min: 1 } }}
-              />
-            </Box>
-            <Box sx={{ width: '100%' }}> {/* // Полная ширина */}
-              <MuiTextField
-                name="efficiencyRatio"
-                label="Эффективность (0.1-1.0)"
-                type="number"
-                value={values.efficiencyRatio}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                error={touched.efficiencyRatio && Boolean(errors.efficiencyRatio)}
-                helperText={touched.efficiencyRatio && errors.efficiencyRatio}
-                fullWidth
-                required
-                InputProps={{ inputProps: { step: 0.01, min: 0.1, max: 1.0 } }}
-              />
-            </Box>
-          </Box>
-          {/* // Кнопки отправки и отмены */}
+               />
+             </Box>
+             {/* // Поля для эффективности и макс. нагрузки */}
+             <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}>
+               <MuiTextField
+                 name="efficiencyPercent"
+                 label="Эффективность (%)"
+                 type="number"
+                 value={values.efficiencyPercent}
+                 onChange={handleChange}
+                 onBlur={handleBlur}
+                 error={touched.efficiencyPercent && Boolean(errors.efficiencyPercent)}
+                 helperText={touched.efficiencyPercent && errors.efficiencyPercent}
+                 fullWidth
+                 required
+                 InputProps={{ inputProps: { step: 1, min: 1, max: 100 } }}
+               />
+             </Box>
+             <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}>
+               <MuiTextField
+                 name="maxCaseload"
+                 label="Макс. нагрузка (дел)"
+                 type="number"
+                 // // Используем ?? '' для обработки undefined/null в значении
+                 value={values.maxCaseload ?? ''}
+                 onChange={handleChange}
+                 onBlur={handleBlur}
+                 error={touched.maxCaseload && Boolean(errors.maxCaseload)}
+                 helperText={touched.maxCaseload && errors.maxCaseload}
+                 fullWidth
+                 // // Поле не обязательное
+                 InputProps={{ inputProps: { min: 0 } }}
+               />
+             </Box>
+           </Box>
+           {/* // Кнопки отправки и отмены */}
           <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
             <Button onClick={onClose} sx={{ mr: 1 }}>
               Отмена

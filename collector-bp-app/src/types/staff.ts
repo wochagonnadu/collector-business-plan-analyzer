@@ -6,5 +6,7 @@ export interface StaffType {
   count: number; // Количество сотрудников данной должности
   salary: number; // Оклад (в месяц)
   workingHours: number; // Рабочих часов в месяц (стандартно ~160-176)
-  efficiencyRatio: number; // Коэффициент эффективности (0.0 - 1.0, например 0.85)
+  // efficiencyRatio: number; // // Заменено на efficiencyPercent
+  efficiencyPercent: number; // // Процент эффективности (например, 85 для 85%, используется как 85/100 в расчетах)
+  maxCaseload?: number; // // Максимальная нагрузка (например, кол-во одновременных дел), опционально
 }
