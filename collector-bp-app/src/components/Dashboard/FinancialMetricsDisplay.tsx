@@ -6,7 +6,8 @@ import { generateCashFlow } from '../../utils/cashFlowCalculations'; // // Ис�
 import { generatePnL } from '../../utils/pnlCalculations'; // // Исправлен путь импорта P&L
 import { calculateNPV, calculateIRR, calculateBreakEven, calculateEBITDA } from '../../utils/financialMetricsCalculations';
 // // Импортируем из нового модуля processCalculations (через index.ts)
-import { calculateCostPerCase, calculateMaxCollectionTime, calculateOverallRecoveryRate } from '../../utils/processCalculations';
+// import { calculateCostPerCase, calculateMaxCollectionTime, calculateOverallRecoveryRate } from '../../utils/processCalculations'; // calculateCostPerCase не используется здесь напрямую, но используется в расчетах ниже
+import { calculateMaxCollectionTime, calculateOverallRecoveryRate } from '../../utils/processCalculations'; // Оставляем нужные
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import Box from '@mui/material/Box';

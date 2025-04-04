@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React from 'react'; // Удаляем неиспользуемые useState, useMemo
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../../store/store';
 import { saveScenario, deleteScenario, resetToDefaults, loadScenarioAndDependencies } from '../../store/slices/financialsSlice';
@@ -27,7 +27,8 @@ import TableRow from '@mui/material/TableRow';
 // // Импортируем необходимые функции расчетов
 import { generateCashFlow } from '../../utils/cashFlowCalculations';
 import { generatePnL } from '../../utils/pnlCalculations';
-import { calculateIRR, calculateNPV, calculateEBITDA, calculateBreakEven } from '../../utils/financialMetricsCalculations'; // // Добавляем calculateBreakEven
+// import { calculateIRR, calculateNPV, calculateEBITDA, calculateBreakEven } from '../../utils/financialMetricsCalculations'; // calculateEBITDA не используется
+import { calculateIRR, calculateNPV, calculateBreakEven } from '../../utils/financialMetricsCalculations'; // Убираем calculateEBITDA
 import { calculateOverallRecoveryRate, calculateAverageCollectionTime } from '../../utils/processCalculations';
 import { calculateRequiredAnnualWorkloadHours } from '../../utils/laborCostCalculations';
 // // Импортируем переименованную функцию для месячной мощности
