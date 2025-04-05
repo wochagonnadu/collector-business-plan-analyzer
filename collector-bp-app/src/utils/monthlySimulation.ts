@@ -96,7 +96,7 @@ export const simulateMonthlyCaseFlow = (
 
   // // Рассчитываем общий ожидаемый доход, используя симулированную стоимость портфеля
   // // Передаем нужные данные в calculateOverallRecoveryRate
-  const overallRecoveryRateValue = calculateOverallRecoveryRate(stageList, caseloadDistribution) / 100;
+  // const overallRecoveryRateValue = calculateOverallRecoveryRate(stageList, caseloadDistribution) / 100; // // УДАЛЕНО: Переменная не используется
   // // Используем simulatedTotalPortfolioValue вместо (totalCases * averageDebtAmount)
   // const totalExpectedRecoveryValue = simulatedTotalPortfolioValue * overallRecoveryRateValue; // // УДАЛЕНО: Переменная не используется
   // console.log(`[Sim] Общий ожидаемый доход (с учетом recovery ${overallRecoveryRateValue * 100}%): ${totalExpectedRecoveryValue.toFixed(2)}`); // // Старый расчет общего дохода больше не нужен для распределения
