@@ -5,9 +5,9 @@ import { RootState } from '../../store/store';
 // // Импортируем функцию расчета CF и ее тип результата
 import { generateCashFlow, MonthlyCashFlow } from '../../utils/cashFlowCalculations';
 // // Импортируем типы для других срезов, необходимых для расчета CF
-import { Stage } from '../../types/stages';
-import { DebtPortfolio, FinancialParams } from '../../types/financials';
-import { StaffType } from '../../types/staff';
+// import { Stage } from '../../types/stages'; // // УДАЛЕНО - не используется напрямую в компоненте
+// import { DebtPortfolio, FinancialParams } from '../../types/financials'; // // УДАЛЕНО - не используются напрямую в компоненте
+// import { StaffType } from '../../types/staff'; // // УДАЛЕНО - не используется напрямую в компоненте
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
