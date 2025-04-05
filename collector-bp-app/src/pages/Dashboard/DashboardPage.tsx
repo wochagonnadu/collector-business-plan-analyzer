@@ -2,7 +2,7 @@ import React from 'react';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 // import Grid from '@mui/material/Grid'; // Убираем Grid
-import Paper from '@mui/material/Paper';
+// import Paper from '@mui/material/Paper'; // Удаляем неиспользуемый импорт
 import LaborCostDisplay from '../../components/LaborCost/LaborCostDisplay';
 import FinancialMetricsDisplay from '../../components/Dashboard/FinancialMetricsDisplay';
 import KeyCharts from '../../components/Dashboard/KeyCharts'; // Импортируем компонент графиков

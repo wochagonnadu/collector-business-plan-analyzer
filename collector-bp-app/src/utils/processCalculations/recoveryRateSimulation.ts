@@ -113,7 +113,7 @@ const simulateCaseFlowAndRecovery = (
     } else {
        // // Стандартный расчет
         const recoveredHere = percentageEntering * (recoveryProb / 100);
-        const writtenOffHere = percentageEntering * (writeOffProb / 100);
+        // const writtenOffHere = percentageEntering * (writeOffProb / 100); // // Переменная не используется
         const transitioningPercentage = Math.max(0, percentageEntering * ((100 - recoveryProb - writeOffProb) / 100));
         // // Логирование удалено
         // console.log(`[SimulateRecovery] Stage ${currentStageId}: RecProb=${recoveryProb}%, RecoveredHere=${recoveredHere.toFixed(4)}%`);

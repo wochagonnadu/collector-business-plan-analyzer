@@ -38,29 +38,43 @@ function stableSort<T>(array: readonly T[], comparator: (a: T, b: T) => number) 
   return stabilizedThis.map((el) => el[0]);
 }
 
-// // Хелпер для получения компаратора
-function getComparator<Key extends keyof any>(
+// // Хелпер для получения компаратора, типизированный для StaffType
+function getComparator(
   order: Order,
-  orderBy: Key,
-): (a: { [key in Key]: number | string }, b: { [key in Key]: number | string }) => number {
+  orderBy: keyof StaffType,
+): (a: StaffType, b: StaffType) => number {
   return order === 'desc'
     ? (a, b) => descendingComparator(a, b, orderBy)
     : (a, b) => -descendingComparator(a, b, orderBy);
 }
 
-function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
-  // Обрабатываем числа и строки
+// // Уточняем типизацию компаратора для StaffType
+function descendingComparator(a: StaffType, b: StaffType, orderBy: keyof StaffType) {
   const valA = a[orderBy];
   const valB = b[orderBy];
-  if (typeof valA === 'number' && typeof valB === 'number') {
-     if (valB < valA) return -1;
-     if (valB > valA) return 1;
-     return 0;
+
+  // // Обработка maxCaseload (может быть undefined)
+  if (orderBy === 'maxCaseload') {
+    const numA = valA ?? -Infinity; // // undefined считаем меньше любого числа
+    const numB = valB ?? -Infinity;
+    if (numB < numA) return -1;
+    if (numB > numA) return 1;
+    return 0;
   }
-   if (typeof valA === 'string' && typeof valB === 'string') {
-     return valB.toLowerCase().localeCompare(valA.toLowerCase());
-   }
-  // Если типы разные или не число/строка, не сортируем
+
+  // // Обработка остальных числовых полей
+  if (typeof valA === 'number' && typeof valB === 'number') {
+    if (valB < valA) return -1;
+    if (valB > valA) return 1;
+    return 0;
+  }
+  // // Обработка строковых полей (group, position, id)
+  if (typeof valA === 'string' && typeof valB === 'string') {
+    // // Используем localeCompare для корректной сортировки строк
+    return valA.localeCompare(valB); // // Поменяем порядок для desc в getComparator
+  }
+
+  // // Если типы не совпадают или не обрабатываются, не меняем порядок
   return 0;
 }
 
@@ -128,7 +142,9 @@ const StaffTable: React.FC<StaffTableProps> = ({ onEdit }) => {
     { id: 'count', numeric: true, label: 'Количество' },
     { id: 'salary', numeric: true, label: 'Оклад (₽)' },
     { id: 'workingHours', numeric: true, label: 'Часы/мес' },
-    { id: 'efficiencyRatio', numeric: true, label: 'Эфф-ть (%)' },
+    // // Заменяем efficiencyRatio на efficiencyPercent в заголовке
+    { id: 'efficiencyPercent', numeric: true, label: 'Эфф-ть (%)' },
+    { id: 'maxCaseload', numeric: true, label: 'Макс. дел' }, // // Добавляем maxCaseload, если его нет
   ];
 
 
@@ -193,16 +209,20 @@ const StaffTable: React.FC<StaffTableProps> = ({ onEdit }) => {
               <TableCell align="right">{staff.count}</TableCell>
               <TableCell align="right">{staff.salary.toLocaleString('ru-RU')}</TableCell>
               <TableCell align="right">{staff.workingHours}</TableCell>
-              <TableCell align="right">{(staff.efficiencyRatio * 100).toFixed(0)}%</TableCell>
+              {/* // Теперь staff.efficiencyPercent должен быть number */}
+              <TableCell align="right">{staff.efficiencyPercent.toFixed(0)}%</TableCell>
+              {/* // Отображаем maxCaseload, если оно есть, иначе прочерк */}
+              <TableCell align="right">{staff.maxCaseload ?? '—'}</TableCell>
               <TableCell align="center">
                 {/* // Кнопки действий */}
                 <Tooltip title="Редактировать">
-                  {/* // Вызываем handleEditClick с объектом staff */}
+                  {/* // staff теперь должен иметь правильный тип StaffType */}
                   <IconButton onClick={() => handleEditClick(staff)} size="small">
                     <EditIcon fontSize="small" />
                   </IconButton>
                 </Tooltip>
                 <Tooltip title="Удалить">
+                   {/* // staff.id теперь должен быть string */}
                   <IconButton onClick={() => handleDelete(staff.id)} size="small" color="error">
                     <DeleteIcon fontSize="small" />
                   </IconButton>

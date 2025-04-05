@@ -4,7 +4,8 @@ import * as irr from 'irr'; // // Импортируем библиотеку д
 import { StaffType } from '../types/staff';
 import { Stage } from '../types/stages';
 import { CostItem } from '../types/costs';
-import { DebtPortfolio, FinancialParams } from '../types/financials';
+// import { DebtPortfolio, FinancialParams } from '../types/financials'; // FinancialParams не используется
+import { DebtPortfolio } from '../types/financials'; // Убираем FinancialParams
 import { calculateAnnualCaseloadLaborCost } from './laborCostCalculations';
 // // Импортируем типы из правильных файлов после рефакторинга
 import { MonthlyCashFlow } from './cashFlowCalculations';

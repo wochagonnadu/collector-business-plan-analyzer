@@ -89,7 +89,7 @@ export const generateCashFlow = (
     // // Рассчитываем начальный и конечный месяц индекса (0 to totalMonths - 1)
     let startMonthIndex = 0;
     if (costStartDate) {
-        const startYear = costStartDate.getFullYear();
+        // const startYear = costStartDate.getFullYear(); // // Переменная не используется
         const startMonth = costStartDate.getMonth();
         // // Предполагаем, что год начала проекта - текущий или первый год симуляции
         // // Для простоты, пока не будем учитывать конкретный год начала проекта,
@@ -101,7 +101,7 @@ export const generateCashFlow = (
 
     let endMonthIndex = totalMonths - 1;
     if (costEndDate) {
-        const endYear = costEndDate.getFullYear();
+        // const endYear = costEndDate.getFullYear(); // // Переменная не используется
         const endMonth = costEndDate.getMonth();
         // // Аналогично startDate, пока просто месяц из даты
         endMonthIndex = endMonth;

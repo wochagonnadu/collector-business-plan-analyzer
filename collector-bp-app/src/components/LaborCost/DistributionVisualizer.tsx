@@ -55,7 +55,8 @@ const DistributionVisualizer: React.FC = () => {
                 label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
               >
                 {/* // Назначаем цвета для каждого сектора */}
-                {chartData.map((entry, index) => (
+                {/* // Префикс '_' для неиспользуемого параметра 'entry' */}
+                {chartData.map((_entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>

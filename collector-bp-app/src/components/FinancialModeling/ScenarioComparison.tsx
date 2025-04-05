@@ -27,8 +27,8 @@ import TableRow from '@mui/material/TableRow';
 // // Импортируем необходимые функции расчетов
 import { generateCashFlow } from '../../utils/cashFlowCalculations';
 import { generatePnL } from '../../utils/pnlCalculations';
-// import { calculateIRR, calculateNPV, calculateEBITDA, calculateBreakEven } from '../../utils/financialMetricsCalculations'; // calculateEBITDA не используется
-import { calculateIRR, calculateNPV, calculateBreakEven } from '../../utils/financialMetricsCalculations'; // Убираем calculateEBITDA
+// import { calculateIRR, calculateNPV, calculateEBITDA, calculateBreakEven } from '../../utils/financialMetricsCalculations'; // calculateEBITDA не используется // Повторно убираем calculateEBITDA
+import { calculateIRR, calculateNPV, calculateBreakEven } from '../../utils/financialMetricsCalculations'; // Убедимся, что calculateEBITDA удален
 import { calculateOverallRecoveryRate, calculateAverageCollectionTime } from '../../utils/processCalculations';
 import { calculateRequiredAnnualWorkloadHours } from '../../utils/laborCostCalculations';
 // // Импортируем переименованную функцию для месячной мощности
@@ -140,11 +140,15 @@ const ScenarioComparison: React.FC = () => {
         const cashFlowData = generateCashFlow(
           stageList,
           portfolio,
+          params, // // Добавляем недостающий аргумент params
           caseloadDistribution,
           staffList,
           costList
         );
-        const pnlData = generatePnL(cashFlowData, params.taxRate);
+        // // Передаем весь объект params, так как generatePnL ожидает его
+        const yearlyPnlData = generatePnL(cashFlowData, params);
+        // // Суммируем чистую прибыль за все годы
+        const totalNetProfit = yearlyPnlData.reduce((sum, yearData) => sum + yearData.netProfit, 0);
         const irrValue = calculateIRR(cashFlowData, costList);
         const npvValue = calculateNPV(cashFlowData, params.discountRate, costList);
         const breakEvenValue = calculateBreakEven(
@@ -170,7 +174,7 @@ const ScenarioComparison: React.FC = () => {
         results.push({
           ...scenario, // // Копируем данные сценария (id, name, etc.)
           metrics: {
-            netProfit: pnlData.netProfit,
+            netProfit: totalNetProfit, // // Используем суммарную чистую прибыль
             irr: isNaN(irrValue) ? undefined : irrValue,
             npv: npvValue,
             breakEvenCases: breakEvenValue === Infinity ? undefined : breakEvenValue,
