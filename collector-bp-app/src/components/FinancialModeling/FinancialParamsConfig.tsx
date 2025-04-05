@@ -11,6 +11,7 @@ import FormLabel from '@mui/material/FormLabel';
 import RadioGroup from '@mui/material/RadioGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Radio from '@mui/material/Radio';
+import Checkbox from '@mui/material/Checkbox'; // // Импортируем Checkbox
 // import Grid from '@mui/material/Grid'; // Используем Box
 import { RootState } from '../../store/store';
 import { updateCurrentParams } from '../../store/slices/financialsSlice';
@@ -45,7 +46,7 @@ const FinancialParamsConfig: React.FC = () => {
         onSubmit={handleSubmit}
         enableReinitialize
       >
-        {({ values, handleChange, handleBlur, touched, errors, isSubmitting }) => (
+        {({ values, handleChange, handleBlur, touched, errors, isSubmitting, setFieldValue }) => ( // // Добавляем setFieldValue
           <Form>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
               <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}>
@@ -85,6 +86,24 @@ const FinancialParamsConfig: React.FC = () => {
                     </Typography>
                   )}
                 </FormControl>
+              </Box>
+              {/* // Добавляем чекбокс для выбора режима уплаты налога */}
+              <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' }, display: 'flex', alignItems: 'center' }}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      name="payTaxesMonthly"
+                      checked={values.payTaxesMonthly ?? false}
+                      // // Используем setFieldValue для корректной обработки true/false
+                      onChange={(event) => {
+                        setFieldValue('payTaxesMonthly', event.target.checked);
+                      }}
+                      onBlur={handleBlur}
+                    />
+                  }
+                  label="Платить налог на прибыль ежемесячно (иначе - ежеквартально)"
+                />
+                {/* // Можно добавить отображение ошибки, если нужна валидация для чекбокса */}
               </Box>
               <Box sx={{ width: '100%', mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
                 <Button type="submit" variant="contained" disabled={isSubmitting}>

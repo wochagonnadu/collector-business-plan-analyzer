@@ -1,9 +1,10 @@
 // // Убираем RootState, импортируем нужные типы
 // import { RootState } from '../store/store';
-import { Stage, SubStage } from '../types/stages'; // // Добавляем SubStage
+import { Stage, SubStage } from '../types/stages';
 import { StaffType } from '../types/staff';
 import { DebtPortfolio } from '../types/financials';
 import { calculateAnnualCaseloadLaborCost } from './laborCostCalculations';
+import randomNormal from 'random-normal'; // // Импортируем библиотеку для нормального распределения
 // // Импортируем из новых модулей
 import { buildLeadsToMap } from './processCalculations/graphUtils';
 import { calculateOverallRecoveryRate } from './processCalculations/recoveryRateSimulation';
@@ -64,7 +65,21 @@ export const simulateMonthlyCaseFlow = (
 
   const stageMap = new Map<string, Stage>(stageList.map(stage => [stage.id, stage]));
   const leadsToMap = buildLeadsToMap(stageList);
-  const { totalCases, averageDebtAmount } = currentPortfolio;
+  const { totalCases, averageDebtAmount, averageDebtSigma } = currentPortfolio; // // Добавляем averageDebtSigma
+
+  // // --- Симуляция общей стоимости портфеля (если нужно) ---
+  let simulatedTotalPortfolioValue = 0;
+  if (averageDebtSigma && averageDebtSigma > 0 && totalCases > 0) {
+      console.log(`[Sim] Симуляция стоимости портфеля: n=${totalCases}, mu=${averageDebtAmount}, sigma=${averageDebtSigma}`);
+      for (let i = 0; i < totalCases; i++) {
+          simulatedTotalPortfolioValue += Math.max(0, randomNormal({ mean: averageDebtAmount, dev: averageDebtSigma }));
+      }
+  } else {
+      simulatedTotalPortfolioValue = totalCases * averageDebtAmount;
+  }
+  console.log(`[Sim] Расчетная общая стоимость портфеля: ${simulatedTotalPortfolioValue.toFixed(2)}`);
+  // // --- Конец симуляции стоимости ---
+
 
   // // --- Предварительный расчет общих эффективных часов на этап ---
   // // Рассчитываем и кэшируем общее эффективное время (в часах) для полного прохождения одного дела через каждый этап
@@ -79,10 +94,28 @@ export const simulateMonthlyCaseFlow = (
   });
   // // --- Конец предварительного расчета ---
 
-  // // Рассчитываем общий ожидаемый доход
+  // // Рассчитываем общий ожидаемый доход, используя симулированную стоимость портфеля
   // // Передаем нужные данные в calculateOverallRecoveryRate
   const overallRecoveryRateValue = calculateOverallRecoveryRate(stageList, caseloadDistribution) / 100;
-  const totalExpectedRecoveryValue = totalCases * averageDebtAmount * overallRecoveryRateValue;
+  // // Используем simulatedTotalPortfolioValue вместо (totalCases * averageDebtAmount)
+  const totalExpectedRecoveryValue = simulatedTotalPortfolioValue * overallRecoveryRateValue;
+  // console.log(`[Sim] Общий ожидаемый доход (с учетом recovery ${overallRecoveryRateValue * 100}%): ${totalExpectedRecoveryValue.toFixed(2)}`); // // Старый расчет общего дохода больше не нужен для распределения
+
+  // // --- Предварительный расчет среднего взыскания в день на этап ---
+  const stageAvgRecoveryPerDay = new Map<string, number>();
+  stageList.forEach(stage => {
+      const recoveryProb = stage.recoveryProbability ?? 0;
+      const maxDuration = stage.durationDays.max ?? 0;
+      if (recoveryProb > 0 && maxDuration > 0) {
+          // Используем среднюю сумму долга, т.к. симуляция индивидуальных сумм усложнит распределение
+          const avgRecoveryPerCase = averageDebtAmount * (recoveryProb / 100);
+          stageAvgRecoveryPerDay.set(stage.id, avgRecoveryPerCase / maxDuration);
+      } else {
+          stageAvgRecoveryPerDay.set(stage.id, 0); // Нет взыскания или мгновенный этап
+      }
+  });
+  // // --- Конец предварительного расчета ---
+
 
   // // Рассчитываем ОБЩИЕ переменные трудозатраты за ВЕСЬ СРОК проекта
   // // Передаем нужные данные в calculateAnnualCaseloadLaborCost
@@ -149,13 +182,25 @@ export const simulateMonthlyCaseFlow = (
       if (!stage || stageState.percentage <= 0) continue;
 
       casesProcessedThisMonth += stageState.percentage; // // Отслеживаем обработанные (для отладки)
-      // // !!! Ключевое изменение: Продвигаем дни на этапе с учетом фактора загрузки !!!
-      // // Если мощности не хватает (фактор < 1), прогресс замедляется.
-      // // Если мощности хватает (фактор >= 1), прогресс идет с нормальной скоростью (фактор = 1).
-      stageState.daysInStage += DAYS_IN_MONTH * Math.min(1, effectiveCapacityFactor); // // Продвигаем дни на этапе с учетом фактора загрузки (не быстрее чем 1x)
-      const maxDurationDays = stage.durationDays.max;
+      // // !!! Ключевое изменение: Рассчитываем прогресс дней в этом месяце с учетом фактора загрузки !!!
+      const daysProgressThisMonth = DAYS_IN_MONTH * Math.min(1, effectiveCapacityFactor);
+      const remainingDaysInStage = Math.max(0, (stage.durationDays.max ?? 0) - stageState.daysInStage);
+      // // Фактический прогресс не может превышать оставшиеся дни
+      const actualDaysProgress = Math.min(daysProgressThisMonth, remainingDaysInStage);
 
-      // // Проверяем, завершен ли этап с учетом накопленных (возможно, замедленных) дней
+      // // --- Распределение дохода по времени ---
+      const avgRecoveryRate = stageAvgRecoveryPerDay.get(stageId) ?? 0;
+      if (avgRecoveryRate > 0 && actualDaysProgress > 0) {
+          const casesInStage = (stageState.percentage / 100) * totalCases;
+          monthlyInflows[month] += casesInStage * actualDaysProgress * avgRecoveryRate;
+      }
+      // // --- Конец распределения дохода ---
+
+      // // Обновляем дни на этапе
+      stageState.daysInStage += actualDaysProgress; // Используем фактический прогресс
+      const maxDurationDays = stage.durationDays.max ?? 0; // Используем ?? 0
+
+      // // Проверяем, завершен ли этап
       if (maxDurationDays <= 0 || stageState.daysInStage >= maxDurationDays) { // // Считаем этап завершенным, если макс. длительность 0 или накопленные дни >= макс.
         const percentageCompleting = stageState.percentage; // // Весь процент на этом этапе завершает его
         const recoveryProb = stage.recoveryProbability ?? 0;
@@ -171,13 +216,12 @@ export const simulateMonthlyCaseFlow = (
         const writtenOffPortion = percentageCompleting * (actualWriteOffProb / 100);
         const transitioningPortion = Math.max(0, percentageCompleting - recoveredPortion - writtenOffPortion);
 
-         // // Распределяем доход (момент распределения может сдвинуться из-за capacityFactor)
-         // // Убираем ограничение month < 12
-         if (overallRecoveryRateValue > 1e-9) {
-            monthlyInflows[month] += (recoveredPortion / overallRecoveryRateValue) * totalExpectedRecoveryValue;
-         }
+         // // Старое распределение дохода на момент завершения УДАЛЕНО
+         // if (overallRecoveryRateValue > 1e-9) {
+         //    monthlyInflows[month] += (recoveredPortion / overallRecoveryRateValue) * totalExpectedRecoveryValue;
+         // }
 
-         // // Накапливаем процент завершенной работы для распределения затрат
+         // // Накапливаем процент завершенной работы для распределения переменных затрат
          // // Убираем ограничение month < 12
          monthlyWorkCompletionPercentage[month] += percentageCompleting; // // Добавляем весь процент, завершивший этап в этом месяце
 
@@ -240,18 +284,18 @@ export const simulateMonthlyCaseFlow = (
   }
   // // Иначе monthlyVariableLaborCosts остается [0, 0, ...]
 
-  // // Корректировка сумм для точности по всему сроку
-  const totalSimulatedIncome = monthlyInflows.reduce((a, b) => a + b, 0);
-  const incomeDiff = totalExpectedRecoveryValue - totalSimulatedIncome;
-  if (Math.abs(incomeDiff) > 1e-6 && totalSimulatedIncome > 1e-9) {
-      console.warn(`Корректировка дохода в симуляции (за ${totalMonths} мес): ${incomeDiff}`);
-      const incomeCorrectionFactor = totalExpectedRecoveryValue / totalSimulatedIncome;
-      for(let i=0; i<totalMonths; i++) monthlyInflows[i] *= incomeCorrectionFactor; // // Пропорциональная коррекция
-  } else if (Math.abs(incomeDiff) > 1e-6 && monthlyInflows.length > 0) {
-       // // Если общая сумма 0, добавляем разницу к первому месяцу (или распределяем?)
-       console.warn(`Добавляем разницу дохода ${incomeDiff} к первому месяцу.`);
-       monthlyInflows[0] += incomeDiff;
-  }
+  // // Корректировка сумм для точности по всему сроку - БОЛЬШЕ НЕ НУЖНА для дохода, т.к. он рассчитывается по-другому
+  // const totalSimulatedIncome = monthlyInflows.reduce((a, b) => a + b, 0);
+  // const incomeDiff = totalExpectedRecoveryValue - totalSimulatedIncome;
+  // if (Math.abs(incomeDiff) > 1e-6 && totalSimulatedIncome > 1e-9) {
+  //     console.warn(`Корректировка дохода в симуляции (за ${totalMonths} мес): ${incomeDiff}`);
+  //     const incomeCorrectionFactor = totalExpectedRecoveryValue / totalSimulatedIncome;
+  //     for(let i=0; i<totalMonths; i++) monthlyInflows[i] *= incomeCorrectionFactor; // // Пропорциональная коррекция
+  // } else if (Math.abs(incomeDiff) > 1e-6 && monthlyInflows.length > 0) {
+  //      // // Если общая сумма 0, добавляем разницу к первому месяцу (или распределяем?)
+  //      console.warn(`Добавляем разницу дохода ${incomeDiff} к первому месяцу.`);
+  //      monthlyInflows[0] += incomeDiff;
+  // }
 
   const totalSimulatedVarCost = monthlyVariableLaborCosts.reduce((a, b) => a + b, 0);
   const costDiff = totalVariableLaborCost - totalSimulatedVarCost;

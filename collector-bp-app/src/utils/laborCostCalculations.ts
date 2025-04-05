@@ -1,9 +1,12 @@
 // // Убираем RootState, импортируем нужные типы
 // import { RootState } from '../store/store';
+// // Убираем RootState, импортируем нужные типы
+// import { RootState } from '../store/store';
 import { StaffType } from '../types/staff';
 import { Stage } from '../types/stages';
 import { DebtPortfolio } from '../types/financials';
 import { calculateSubStageExecutionCost } from './staffCalculations'; // Импортируем из нового модуля
+import { calculateEmployerContributions } from './taxCalculations'; // // Импортируем расчет взносов работодателя
 
 // // --- Расчеты трудозатрат ---
 
@@ -154,4 +157,37 @@ export const calculateRequiredAnnualWorkloadHours = (
   console.log('Расчет требуемой годовой нагрузки (часы):', totalRequiredHours);
   // // Возвращаем общую требуемую нагрузку в часах
   return totalRequiredHours;
+};
+
+/**
+ * Рассчитывает общую годовую сумму страховых взносов работодателя за всех сотрудников.
+ * @param staffList - Список персонала.
+ * @returns Общая годовая сумма взносов работодателя.
+ */
+export const calculateTotalAnnualEmployerContributions = (
+  staffList: StaffType[]
+): number => {
+  if (!staffList || staffList.length === 0) {
+    return 0;
+  }
+
+  let totalContributions = 0;
+
+  staffList.forEach(staff => {
+    // // Рассчитываем годовой ФОТ (фонд оплаты труда) для данного типа сотрудников (оклад * кол-во * 12 мес)
+    const annualGrossSalaryPerType = staff.salary * staff.count * 12;
+
+    // // Рассчитываем взносы для ОДНОГО сотрудника этого типа
+    // // Используем ставку от НС из данных сотрудника или дефолтную (0.2%)
+    const contributionsPerEmployee = calculateEmployerContributions(
+      staff.salary * 12, // // Годовой доход одного сотрудника
+      staff.accidentInsuranceRatePercent // // Используем сохраненную ставку или undefined (тогда сработает дефолт в функции)
+    );
+
+    // // Суммируем взносы для ВСЕХ сотрудников этого типа (взносы на одного * кол-во)
+    totalContributions += contributionsPerEmployee.total * staff.count;
+  });
+
+  console.log('Расчет общих годовых взносов работодателя:', totalContributions);
+  return totalContributions;
 };

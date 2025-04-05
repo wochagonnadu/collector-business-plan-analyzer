@@ -33,12 +33,16 @@ const defaultPortfolio: DebtPortfolio = {
     bankruptcy: 5,
   },
   portfolioPurchaseRate: 30, // // Примерная ставка покупки портфеля 30%
+  averageDebtSigma: 20, // // Стандартное отклонение по умолчанию
+  startDate: new Date().toISOString().split('T')[0], // // Дата начала по умолчанию - сегодня
+  isInitialPurchase: true, // // По умолчанию считаем первоначальной покупкой
 };
 
 const defaultParams: FinancialParams = {
   discountRate: 0.1, // 10%
   taxRate: 0.2, // 20%
   projectDurationYears: 1, // // Срок проекта по умолчанию 1 год
+  payTaxesMonthly: false, // // По умолчанию - ежеквартально
 };
 
 // // Начальное состояние
@@ -126,6 +130,8 @@ const financialsSlice = createSlice({
     // // Возможно, лучше инициализировать на основе defaultPortfolio.initialStageDistribution?
     // // Пока оставим пустым, т.к. этапы могут измениться.
     state.caseloadDistribution = {}; // // Сбрасываем и caseloadDistribution
+    // // Сбрасываем и payTaxesMonthly
+    state.currentParams.payTaxesMonthly = defaultParams.payTaxesMonthly;
     console.log('Настройки сброшены к значениям по умолчанию');
   },
      // // Редьюсер для синхронизации caseloadDistribution с текущими этапами

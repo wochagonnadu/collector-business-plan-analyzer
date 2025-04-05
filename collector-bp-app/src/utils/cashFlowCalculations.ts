@@ -5,6 +5,12 @@ import { StaffType } from '../types/staff';
 import { CostItem } from '../types/costs';
 import { DebtPortfolio, FinancialParams } from '../types/financials'; // // FinancialParams уже импортирован
 import { Stage } from '../types/stages';
+// // Импортируем расчет взносов работодателя
+import { calculateTotalAnnualEmployerContributions } from './laborCostCalculations';
+// // Импортируем расчет P&L и CIT платежей
+import randomNormal from 'random-normal'; // // Импортируем библиотеку для нормального распределения
+import { generatePnL } from './pnlCalculations';
+import { calculateMonthlyCITPayments } from './taxPaymentCalculations';
 
 // // --- Расчеты Cash Flow ---
 
@@ -20,6 +26,7 @@ export interface MonthlyCashFlow {
   outflowOtherVariable: number; // // Исходящий поток: Прочие переменные затраты (операционные)
   outflowCapital: number; // // Исходящий поток: Капитальные затраты
   outflowTotal: number; // Общий исходящий поток
+  outflowTaxCIT: number; // // Исходящий поток: Налог на прибыль (CIT)
   net: number; // Чистый денежный поток (inflow - outflowTotal)
   cumulative: number; // Накопленный денежный поток
 }
@@ -58,16 +65,23 @@ export const generateCashFlow = (
     !params // // Проверяем наличие params
   ) {
     console.warn('Недостаточно данных (этапы, портфель, параметры, персонал, затраты, распределение) для генерации Cash Flow.');
-    // // Возвращаем пустой массив нужной длины
+    // // Возвращаем пустой массив нужной длины, включая outflowTaxCIT
     return Array(totalMonths).fill(null).map((_, i) => ({
         month: i + 1, inflow: 0, outflowLaborFixed: 0, outflowLaborVariable: 0,
-        outflowOtherFixed: 0, outflowOtherVariable: 0, outflowCapital: 0,
+        outflowOtherFixed: 0, outflowOtherVariable: 0, outflowCapital: 0, outflowTaxCIT: 0, // // Добавлено
         outflowTotal: 0, net: 0, cumulative: 0
     }));
   }
 
   // 1. Расчет фиксированных ежемесячных затрат на персонал (оклады)
-  const monthlyFixedLaborCost = staffList.reduce((sum, s) => sum + s.salary * s.count, 0);
+  const monthlyFixedSalaryCost = staffList.reduce((sum, s) => sum + s.salary * s.count, 0);
+  // // Рассчитываем ежемесячные взносы работодателя
+  const totalAnnualContributions = calculateTotalAnnualEmployerContributions(staffList);
+  const monthlyEmployerContributions = totalAnnualContributions / 12;
+  // // Общие фиксированные трудозатраты = оклады + взносы
+  const monthlyTotalFixedLaborCost = monthlyFixedSalaryCost + monthlyEmployerContributions;
+  console.log(`Ежемесячные фикс. трудозатраты: Оклады=${monthlyFixedSalaryCost.toFixed(2)}, Взносы=${monthlyEmployerContributions.toFixed(2)}, Итого=${monthlyTotalFixedLaborCost.toFixed(2)}`);
+
 
   // 2. Расчет прочих затрат по месяцам на весь срок проекта
   const monthlyFixedOtherCosts = Array(totalMonths).fill(0);
@@ -164,32 +178,89 @@ export const generateCashFlow = (
   const monthlyInflows = simulationOutput.monthlyInflows;
   const monthlyVariableLaborCosts = simulationOutput.monthlyVariableLaborCosts;
 
-  // 5. Рассчитываем стоимость покупки портфеля
+  // 5. Рассчитываем стоимость покупки портфеля (с учетом возможной симуляции стоимости)
   const portfolioPurchaseRate = currentPortfolio.portfolioPurchaseRate ?? 0; // // Получаем ставку (0-100)
-  const totalPortfolioValue = currentPortfolio.totalCases * currentPortfolio.averageDebtAmount;
-  const portfolioPurchaseCost = totalPortfolioValue * (portfolioPurchaseRate / 100);
-  console.log(`Расчетная стоимость покупки портфеля (${portfolioPurchaseRate}%): ${portfolioPurchaseCost}`);
+  let totalPortfolioValue = 0;
+  const { totalCases, averageDebtAmount, averageDebtSigma } = currentPortfolio;
 
-  // 6. Формируем итоговый Cash Flow на весь срок проекта
+  if (averageDebtSigma && averageDebtSigma > 0 && totalCases > 0) {
+      // // Симулируем стоимость каждого дела и суммируем
+      console.log(`Симуляция стоимости портфеля: n=${totalCases}, mu=${averageDebtAmount}, sigma=${averageDebtSigma}`);
+      for (let i = 0; i < totalCases; i++) {
+          // // Генерируем случайное значение, но не меньше нуля
+          totalPortfolioValue += Math.max(0, randomNormal({ mean: averageDebtAmount, dev: averageDebtSigma }));
+      }
+  } else {
+      // // Используем среднее значение, если сигма не задана или равна 0
+      totalPortfolioValue = totalCases * averageDebtAmount;
+  }
+  console.log(`Расчетная общая стоимость портфеля: ${totalPortfolioValue.toFixed(2)}`);
+
+  // // Рассчитываем стоимость покупки только если это первоначальная покупка
+  const portfolioPurchaseCost = currentPortfolio.isInitialPurchase
+      ? totalPortfolioValue * (portfolioPurchaseRate / 100)
+      : 0;
+  console.log(`Расчетная стоимость покупки портфеля (${currentPortfolio.isInitialPurchase ? portfolioPurchaseRate : 0}%): ${portfolioPurchaseCost.toFixed(2)}`);
+
+
+  // 6. Рассчитываем P&L для определения налога на прибыль
+  // // Сначала создаем "предварительный" CF без учета налога на прибыль, чтобы рассчитать P&L
+  const preliminaryCashFlow: MonthlyCashFlow[] = [];
+  let prelimCumulativeFlow = 0;
+  for (let i = 0; i < totalMonths; i++) {
+      const inflow = monthlyInflows[i] ?? 0;
+      const outflowLaborFixed = monthlyTotalFixedLaborCost;
+      const outflowLaborVariable = monthlyVariableLaborCosts[i] ?? 0;
+      const outflowOtherFixed = monthlyFixedOtherCosts[i] ?? 0;
+      const outflowOtherVariable = monthlyVariableOtherCosts[i] ?? 0;
+      const outflowCapital = (monthlyCapitalCosts[i] ?? 0) + (i === 0 ? portfolioPurchaseCost : 0);
+      const outflowTotal = outflowLaborFixed + outflowLaborVariable + outflowOtherFixed + outflowOtherVariable + outflowCapital;
+      const netFlow = inflow - outflowTotal;
+      prelimCumulativeFlow += netFlow;
+      // // Добавляем outflowTaxCIT: 0 в объект preliminaryCashFlow
+      preliminaryCashFlow.push({
+          month: i + 1, inflow, outflowLaborFixed, outflowLaborVariable,
+          outflowOtherFixed, outflowOtherVariable, outflowCapital, outflowTaxCIT: 0, // // Добавлено для соответствия типу
+          outflowTotal, net: netFlow, cumulative: prelimCumulativeFlow,
+      });
+  }
+  // // Рассчитываем годовой P&L на основе предварительного CF
+  const yearlyPnL = generatePnL(preliminaryCashFlow, params);
+  console.log('[generateCashFlow] Calculated Yearly P&L:', JSON.stringify(yearlyPnL)); // <-- Log PnL
+
+  // 7. Рассчитываем ежемесячные платежи по налогу на прибыль (CIT)
+  // // Передаем preliminaryCashFlow вместо yearlyPnL
+  const monthlyCITPayments = calculateMonthlyCITPayments(
+      preliminaryCashFlow,
+      params.taxRate,
+      params.payTaxesMonthly,
+      projectDurationYears
+  );
+  console.log('[generateCashFlow] Calculated Monthly CIT Payments:', JSON.stringify(monthlyCITPayments)); // <-- Log CIT Payments
+
+  // 8. Формируем итоговый Cash Flow на весь срок проекта, включая CIT
   const cashFlow: MonthlyCashFlow[] = [];
   let cumulativeFlow = 0;
   for (let i = 0; i < totalMonths; i++) { // // Цикл по всем месяцам
     const inflow = monthlyInflows[i] ?? 0; // // Используем ?? 0 на случай, если симуляция вернула меньше месяцев // // ВОССТАНОВЛЕНО: Доход = взысканный принципал
-    const outflowLaborFixed = monthlyFixedLaborCost;
+    // // Используем общие фиксированные трудозатраты (оклады + взносы)
+    const outflowLaborFixed = monthlyTotalFixedLaborCost;
     const outflowLaborVariable = monthlyVariableLaborCosts[i] ?? 0;
     const outflowOtherFixed = monthlyFixedOtherCosts[i] ?? 0;
     const outflowOtherVariable = monthlyVariableOtherCosts[i] ?? 0;
-    // // Добавляем стоимость покупки портфеля к капитальным затратам в первый месяц (i === 0)
-    const outflowCapital = (monthlyCapitalCosts[i] ?? 0) + (i === 0 ? portfolioPurchaseCost : 0);
+    // // Добавляем стоимость покупки портфеля к капитальным затратам в первый месяц (i === 0) ТОЛЬКО если isInitialPurchase = true
+    const outflowCapital = (monthlyCapitalCosts[i] ?? 0) + (i === 0 && currentPortfolio.isInitialPurchase ? portfolioPurchaseCost : 0);
+    const outflowTaxCIT = monthlyCITPayments[i] ?? 0; // // Берем рассчитанный платеж CIT
 
-    const outflowTotal = outflowLaborFixed + outflowLaborVariable + outflowOtherFixed + outflowOtherVariable + outflowCapital;
+    // // Пересчитываем outflowTotal, включая налог на прибыль
+    const outflowTotal = outflowLaborFixed + outflowLaborVariable + outflowOtherFixed + outflowOtherVariable + outflowCapital + outflowTaxCIT;
     const netFlow = inflow - outflowTotal;
     cumulativeFlow += netFlow;
 
     cashFlow.push({
       month: i + 1, // // Номер месяца от 1 до totalMonths
       inflow, outflowLaborFixed, outflowLaborVariable,
-      outflowOtherFixed, outflowOtherVariable, outflowCapital,
+      outflowOtherFixed, outflowOtherVariable, outflowCapital, outflowTaxCIT, // // Добавляем CIT
       outflowTotal, net: netFlow, cumulative: cumulativeFlow,
     });
   }

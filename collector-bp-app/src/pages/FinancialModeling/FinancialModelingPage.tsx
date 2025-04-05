@@ -10,7 +10,7 @@ import TimelineVisualizer from '../../components/FinancialModeling/TimelineVisua
 import CaseloadDistributionConfig from '../../components/LaborCost/CaseloadDistributionConfig';
 import DistributionVisualizer from '../../components/LaborCost/DistributionVisualizer'; // Импортируем визуализатор
 // import StageProbabilitiesConfig from '../../components/FinancialModeling/StageProbabilitiesConfig'; // // Убираем импорт компонента вероятностей
-import HorizontalCashflowReport from '../../components/FinancialModeling/HorizontalCashflowReport'; // // Импортируем новый отчет ДДС
+import HorizontalCashflowReport from '../../components/FinancialModeling/HorizontalCashflowReport'; // // Импортируем новый отчет ДДС (Путь обновлен, т.к. index.tsx в папке)
 // // Можно добавить импорт для метрик типа BreakEven, IRR, NPV, EBITDA, CostPerCase
 // import FinancialMetricsDisplay from '../../components/FinancialModeling/FinancialMetricsDisplay';
 

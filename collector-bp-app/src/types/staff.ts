@@ -9,4 +9,5 @@ export interface StaffType {
   // efficiencyRatio: number; // // Заменено на efficiencyPercent
   efficiencyPercent: number; // // Процент эффективности (например, 85 для 85%, используется как 85/100 в расчетах)
   maxCaseload?: number; // // Максимальная нагрузка (например, кол-во одновременных дел), опционально
+  accidentInsuranceRatePercent?: number; // // Ставка страхования от несчастных случаев (%), опционально (0.2-8.5)
 }

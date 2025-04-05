@@ -6,6 +6,8 @@ import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
+import FormControlLabel from '@mui/material/FormControlLabel'; // // Импорт для чекбокса
+import Checkbox from '@mui/material/Checkbox'; // // Импорт для чекбокса
 // import Grid from '@mui/material/Grid'; // Убираем Grid
 import { RootState } from '../../store/store';
 import { updateCurrentPortfolio } from '../../store/slices/financialsSlice';
@@ -28,6 +30,11 @@ const validationSchema = Yup.object({
    }),
    // // Добавляем валидацию для нового поля
    portfolioPurchaseRate: Yup.number().required('Обязательно').min(0, 'Не менее 0%').max(100, 'Не более 100%'),
+   // // Добавляем валидацию для стандартного отклонения (опционально, не отрицательное)
+   averageDebtSigma: Yup.number().min(0, 'Не может быть меньше 0').nullable(),
+   // // Добавляем валидацию для даты начала (опционально, но если есть, то валидная дата)
+   startDate: Yup.date().nullable().typeError('Некорректный формат даты'),
+   // // Валидация для isInitialPurchase не требуется (boolean)
  });
 
 
@@ -83,6 +90,40 @@ const DebtPortfolioConfig: React.FC = () => {
                   error={touched.portfolioPurchaseRate && Boolean(errors.portfolioPurchaseRate)} helperText={touched.portfolioPurchaseRate && errors.portfolioPurchaseRate}
                   fullWidth required
                 />
+              </Box>
+              {/* // Добавляем поле для стандартного отклонения */}
+              <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}>
+                <MuiTextField
+                  name="averageDebtSigma" label="Стд. откл. ср. долга (₽)" type="number" InputProps={{ inputProps: { min: 0 } }}
+                  value={values.averageDebtSigma ?? ''} // // Используем ?? '' для обработки undefined
+                  onChange={handleChange} onBlur={handleBlur}
+                  error={touched.averageDebtSigma && Boolean(errors.averageDebtSigma)} helperText={touched.averageDebtSigma && errors.averageDebtSigma}
+                  fullWidth // // Поле не обязательное
+                />
+              </Box>
+              {/* // Добавляем поле для даты начала */}
+              <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}>
+                <MuiTextField
+                  name="startDate" label="Дата начала портфеля" type="date"
+                  value={values.startDate ?? ''} // // Используем ?? '' для обработки undefined
+                  onChange={handleChange} onBlur={handleBlur}
+                  error={touched.startDate && Boolean(errors.startDate)} helperText={touched.startDate && errors.startDate}
+                  fullWidth InputLabelProps={{ shrink: true }} // // Чтобы label не перекрывал дату
+                />
+              </Box>
+              {/* // Добавляем чекбокс для первоначальной покупки */}
+              <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' }, display: 'flex', alignItems: 'center' }}>
+                 <FormControlLabel
+                   control={
+                     <Checkbox
+                       name="isInitialPurchase"
+                       checked={values.isInitialPurchase ?? false}
+                       onChange={handleChange}
+                       onBlur={handleBlur}
+                     />
+                   }
+                   label="Первоначальная покупка портфеля"
+                 />
               </Box>
               {/* // Вероятность взыскания - УДАЛЕНО */}
 
