@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { CostItem, CFCategory } from '../../types/costs'; // Импортируем тип И КАТЕГОРИЮ
+import { CostItem } from '../../types/costs'; // Импортируем типы (CFCategory удален - не используется)
 
 // // Определяем тип для состояния этого среза
 interface CostsState {

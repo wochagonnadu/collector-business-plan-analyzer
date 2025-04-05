@@ -120,10 +120,12 @@ const StagesConfigurator: React.FC = () => {
                 </Typography>
                 {/* // Добавляем отображение вероятностей */}
                 <Typography sx={{ color: 'text.secondary', mr: 2, whiteSpace: 'nowrap' }}>
-                  {`Возврат: ${stage.recoveryProbability != null ? (stage.recoveryProbability * 100).toFixed(1) + '%' : 'N/A'}`}
+                  {/* // Убрано умножение на 100, значение уже в процентах */}
+                  {`Возврат: ${stage.recoveryProbability != null ? stage.recoveryProbability.toFixed(1) + '%' : 'N/A'}`}
                 </Typography>
                 <Typography sx={{ color: 'text.secondary', mr: 2, whiteSpace: 'nowrap' }}>
-                  {`Списание: ${stage.writeOffProbability != null ? (stage.writeOffProbability * 100).toFixed(1) + '%' : 'N/A'}`}
+                  {/* // Убрано умножение на 100, значение уже в процентах */}
+                  {`Списание: ${stage.writeOffProbability != null ? stage.writeOffProbability.toFixed(1) + '%' : 'N/A'}`}
                 </Typography>
               </Box>
               <Box sx={{ ml: 'auto', flexShrink: 0 }}> {/* // Кнопки справа, не сжимаются */}

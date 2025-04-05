@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
-import { Stage } from '../../types/stages'; // // Импортируем тип Stage
+// import { Stage } from '../../types/stages'; // // Импортируем тип Stage - УДАЛЕНО, т.к. не используется
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
@@ -15,7 +15,8 @@ const WorkflowVisualizer: React.FC = () => {
   // // Функция для форматирования вероятности
   const formatProbability = (value: number | null | undefined): string => {
     if (value == null) return 'N/A'; // // Проверка на null и undefined
-    return `${(value * 100).toFixed(1)}%`;
+    // // Убрано умножение на 100, значение уже в процентах
+    return `${value.toFixed(1)}%`;
   };
 
   return (

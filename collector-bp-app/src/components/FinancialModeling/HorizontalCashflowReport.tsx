@@ -1,7 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
-import { CostItem, CFCategory } from '../../types/costs';
+// import { CostItem, CFCategory } from '../../types/costs'; // // УДАЛЕНО - не используются
+// // Импортируем функцию расчета CF и ее тип результата
+import { generateCashFlow, MonthlyCashFlow } from '../../utils/cashFlowCalculations';
+// // Импортируем типы для других срезов, необходимых для расчета CF
+import { Stage } from '../../types/stages';
+import { DebtPortfolio, FinancialParams } from '../../types/financials';
+import { StaffType } from '../../types/staff';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
@@ -55,11 +61,22 @@ const getYear = (dateString: string | undefined): number | null => {
 
 // // Основной компонент отчета
 const HorizontalCashflowReport: React.FC = () => {
+  // // Получаем все необходимые данные из state для расчета CF
   const costList = useSelector((state: RootState) => state.costs.costList);
+  const stageList = useSelector((state: RootState) => state.stages.stageList);
+  const { currentPortfolio, currentParams, caseloadDistribution } = useSelector((state: RootState) => state.financials);
+  const staffList = useSelector((state: RootState) => state.staff.staffList);
+
+  // // Рассчитываем данные CF с помощью useMemo
+  const calculatedCashFlowData: MonthlyCashFlow[] = useMemo(() => generateCashFlow(
+    stageList, currentPortfolio, currentParams, caseloadDistribution, staffList, costList
+  ), [stageList, currentPortfolio, currentParams, caseloadDistribution, staffList, costList]);
+
   const [period, setPeriod] = useState<'month' | 'quarter'>('month');
 
+  // // Добавляем _ к event, т.к. он не используется
   const handlePeriodChange = (
-    event: React.MouseEvent<HTMLElement>,
+    _event: React.MouseEvent<HTMLElement>,
     newPeriod: 'month' | 'quarter' | null,
   ) => {
     if (newPeriod !== null) {
@@ -152,10 +169,10 @@ const HorizontalCashflowReport: React.FC = () => {
       }
     });
 
-    // // Преобразуем агрегированные данные в плоский массив для рендеринга
-    const flatReport: ReportRow[] = [];
+    // // Преобразуем агрегированные данные по *затратам* в плоский массив для рендеринга
+    const costReportRows: ReportRow[] = [];
     Object.entries(aggregated).forEach(([mainCat, types]) => {
-      let mainCatTotals = Array(12).fill(0); // // Итоги по главной категории
+      let mainCatTotals = Array(12).fill(0); // // Итоги по главной категории затрат
       const typeRows: ReportRow[] = [];
 
       Object.entries(types).forEach(([type, tags]) => {
@@ -181,17 +198,28 @@ const HorizontalCashflowReport: React.FC = () => {
         }
       });
 
-      // // Добавляем строку главной категории только если есть дочерние типы
-      if (typeRows.length > 0) {
-        flatReport.push({ name: mainCat, periodAmounts: mainCatTotals, level: 0 });
-        flatReport.push(...typeRows);
-      }
-    });
+        // // Добавляем строку главной категории затрат только если есть дочерние типы
+        if (typeRows.length > 0) {
+          costReportRows.push({ name: mainCat, periodAmounts: mainCatTotals, level: 0 });
+          costReportRows.push(...typeRows);
+        }
+      });
+
+      // // Строка для отображения ежемесячных поступлений (добавляется перед затратами)
+      // // Используем поле inflow из рассчитанных данных
+      const incomeRow: ReportRow = {
+        name: 'Поступления (от взыскания)', // // Название строки дохода
+        periodAmounts: calculatedCashFlowData.map(monthData => monthData.inflow), // // Берем inflow из каждого месяца
+        level: 1, // // Уровень как у "Доходы"/"Расходы"
+        isIncome: true, // // Флаг для возможной стилизации
+      };
 
     // // TODO: Рассчитать и добавить общую строку "Чистый денежный поток"
 
-    return flatReport;
-  }, [costList, modelingYear]); // // Теперь зависим от costList и modelingYear
+    // // Возвращаем строку дохода + строки затрат
+    return [incomeRow, ...costReportRows];
+    // // Зависим от costList, modelingYear и рассчитанных данных CF
+  }, [costList, modelingYear, calculatedCashFlowData]);
 
   // // Определяем колонки для отображения
   const columns = useMemo(() => {
