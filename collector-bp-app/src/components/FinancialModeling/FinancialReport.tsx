@@ -98,12 +98,11 @@ const FinancialReport: React.FC = () => {
         <TableContainer>
           <Table size="small" aria-label="cash flow table">
             <TableHead>
+              {/* // Изменено: Обновлены заголовки таблицы CF */}
               <TableRow>
                 <TableCell>Месяц</TableCell>
-                <TableCell align="right">Доход</TableCell>
-                <TableCell align="right">Расход (Персонал)</TableCell>
-                <TableCell align="right">Расход (Прочие)</TableCell>
-                <TableCell align="right">Расход (Итого)</TableCell>
+                <TableCell align="right">Доходы</TableCell>
+                <TableCell align="right">Расходы</TableCell>
                 <TableCell align="right">Чистый поток</TableCell>
                 <TableCell align="right">Накопленный поток</TableCell>
               </TableRow>
@@ -112,11 +111,9 @@ const FinancialReport: React.FC = () => {
               {cashFlowData.map((row) => (
                 <TableRow key={row.month}>
                   <TableCell>{row.month}</TableCell>
+                  {/* // Изменено: Отображаем основные показатели CF */}
                   <TableCell align="right">{formatCurrency(row.inflow)}</TableCell>
-                  {/* // Используем новые поля трудозатрат и прочих затрат */}
-                  <TableCell align="right">{formatCurrency(row.outflowLaborFixed + row.outflowLaborVariable)}</TableCell>
-                  <TableCell align="right">{formatCurrency(row.outflowOtherFixed + row.outflowOtherVariable + row.outflowCapital)}</TableCell> {/* // Суммируем все прочие для отображения */}
-                  <TableCell align="right">{formatCurrency(row.outflowTotal)}</TableCell>
+                  <TableCell align="right">{formatCurrency(row.outflowTotal)}</TableCell> {/* // Используем общие расходы */}
                   <TableCell align="right" sx={{ color: row.net < 0 ? 'error.main' : 'success.main' }}>
                     {formatCurrency(row.net)}
                   </TableCell>
