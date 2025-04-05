@@ -175,7 +175,7 @@ export const calculateTotalAnnualEmployerContributions = (
 
   staffList.forEach(staff => {
     // // Рассчитываем годовой ФОТ (фонд оплаты труда) для данного типа сотрудников (оклад * кол-во * 12 мес)
-    const annualGrossSalaryPerType = staff.salary * staff.count * 12;
+    // const annualGrossSalaryPerType = staff.salary * staff.count * 12; // // УДАЛЕНО: Переменная не используется
 
     // // Рассчитываем взносы для ОДНОГО сотрудника этого типа
     // // Используем ставку от НС из данных сотрудника или дефолтную (0.2%)
