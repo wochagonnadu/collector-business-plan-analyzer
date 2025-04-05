@@ -1,14 +1,25 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { CostItem } from '../../types/costs'; // Импортируем тип
+import { CostItem, CFCategory } from '../../types/costs'; // Импортируем тип И КАТЕГОРИЮ
 
 // // Определяем тип для состояния этого среза
 interface CostsState {
   costList: CostItem[];
 }
 
-// // Начальное состояние - пустой список затрат
+// // Начальное состояние - можно добавить пример для наглядности
 const initialState: CostsState = {
-  costList: [],
+  costList: [
+    // // Пример затраты для демонстрации
+    // {
+    //   id: crypto.randomUUID(),
+    //   name: 'Аренда офиса',
+    //   amount: 50000,
+    //   tag: 'Операционные',
+    //   cfCategory: 'Операционная - Расходы', // // Добавлено поле категории ДДС
+    //   periodicity: 'Ежемесячно',
+    //   startDate: '2024-01-01',
+    // },
+  ],
 };
 
 // // Создаем срез состояния для управления затратами

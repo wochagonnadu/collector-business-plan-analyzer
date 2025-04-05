@@ -9,7 +9,8 @@ import ScenarioComparison from '../../components/FinancialModeling/ScenarioCompa
 import TimelineVisualizer from '../../components/FinancialModeling/TimelineVisualizer';
 import CaseloadDistributionConfig from '../../components/LaborCost/CaseloadDistributionConfig';
 import DistributionVisualizer from '../../components/LaborCost/DistributionVisualizer'; // Импортируем визуализатор
-import StageProbabilitiesConfig from '../../components/FinancialModeling/StageProbabilitiesConfig'; // // Импортируем новый компонент
+// import StageProbabilitiesConfig from '../../components/FinancialModeling/StageProbabilitiesConfig'; // // Убираем импорт компонента вероятностей
+import HorizontalCashflowReport from '../../components/FinancialModeling/HorizontalCashflowReport'; // // Импортируем новый отчет ДДС
 // // Можно добавить импорт для метрик типа BreakEven, IRR, NPV, EBITDA, CostPerCase
 // import FinancialMetricsDisplay from '../../components/FinancialModeling/FinancialMetricsDisplay';
 
@@ -27,13 +28,15 @@ const FinancialModelingPage: React.FC = () => {
       {/* // Компоненты конфигурации */}
       <DebtPortfolioConfig />
       <FinancialParamsConfig />
-      {/* // Добавляем новый компонент для вероятностей этапов */}
-      <StageProbabilitiesConfig />
+      {/* // Убираем компонент для вероятностей этапов */}
+      {/* <StageProbabilitiesConfig /> */}
       <CaseloadDistributionConfig />
       <DistributionVisualizer /> {/* // Добавляем визуализатор распределения caseload */}
 
       {/* // Компонент для отображения отчетов */}
       <FinancialReport />
+      {/* // Добавляем новый горизонтальный отчет ДДС */}
+      <HorizontalCashflowReport />
 
       {/* // Компонент для отображения ключевых метрик (IRR, NPV, BreakEven и т.д.) */}
       {/* <FinancialMetricsDisplay /> */}

@@ -77,6 +77,7 @@ const headCells: readonly HeadCell[] = [
   { id: 'name', numeric: false, label: 'Название' },
   { id: 'amount', numeric: true, label: 'Сумма (₽)' },
   { id: 'tag', numeric: false, label: 'Тег' },
+  { id: 'cfCategory', numeric: false, label: 'Категория ДДС' }, // // Добавляем заголовок для новой колонки
   { id: 'periodicity', numeric: false, label: 'Периодичность' },
   { id: 'startDate', numeric: false, label: 'Дата начала' },
   { id: 'endDate', numeric: false, label: 'Дата окончания' },
@@ -214,6 +215,7 @@ const CostTable: React.FC<CostTableProps> = ({ onEdit }) => {
                 {/* // Handle potential undefined amount */}
                 <TableCell align="right">{(cost.amount ?? 0).toLocaleString('ru-RU')}</TableCell>
                 <TableCell>{cost.tag}</TableCell>
+                <TableCell>{cost.cfCategory}</TableCell> {/* // Отображаем значение категории ДДС */}
                 <TableCell>{cost.periodicity}</TableCell>
                 <TableCell>{cost.startDate || '---'}</TableCell>
                 <TableCell>{cost.endDate || '---'}</TableCell>
