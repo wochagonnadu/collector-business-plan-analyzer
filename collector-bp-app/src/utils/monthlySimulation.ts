@@ -7,7 +7,7 @@ import { calculateAnnualCaseloadLaborCost } from './laborCostCalculations';
 import randomNormal from 'random-normal'; // // Импортируем библиотеку для нормального распределения
 // // Импортируем из новых модулей
 import { buildLeadsToMap } from './processCalculations/graphUtils';
-import { calculateOverallRecoveryRate } from './processCalculations/recoveryRateSimulation';
+// import { calculateOverallRecoveryRate } from './processCalculations/recoveryRateSimulation'; // // УДАЛЕНО: Импорт не используется
 // // Импортируем новые функции для расчета мощности и трудозатрат по времени
 import { calculateAvailableMonthlyWorkHours, calculateSubStageEffectiveHours } from './staffCalculations';
 
