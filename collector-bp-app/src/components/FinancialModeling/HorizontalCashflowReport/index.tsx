@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../../store/store';
-import { generateCashFlow, MonthlyCashFlow } from '../../../utils/cashFlowCalculations';
+// // Убираем useSelector, RootState, generateCashFlow, MonthlyCashFlow т.к. данные придут через props
+// import { useSelector } from 'react-redux';
+// import { RootState } from '../../../store/store';
+// import { generateCashFlow, MonthlyCashFlow } from '../../../utils/cashFlowCalculations';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
@@ -18,23 +19,30 @@ import {
   ReportRow,
   monthNames,
   quarterNames,
-  getYear,
-  aggregateReportData,
+  // getYear, // Убираем, т.к. modelingYear придет из props
+  // aggregateReportData, // Убираем, т.к. данные придут из props
   getPeriodValue,
 } from './reportUtils';
 
-// Основной компонент отчета
-const HorizontalCashflowReport: React.FC = () => {
-  // Получаем все необходимые данные из state для расчета CF
-  const costList = useSelector((state: RootState) => state.costs.costList);
-  const stageList = useSelector((state: RootState) => state.stages.stageList);
-  const { currentPortfolio, currentParams, caseloadDistribution } = useSelector((state: RootState) => state.financials);
-  const staffList = useSelector((state: RootState) => state.staff.staffList);
+// // Определяем тип для props
+interface HorizontalCashflowReportProps {
+  aggregatedReportData: ReportRow[];
+  modelingYear: number;
+}
 
-  // Рассчитываем данные CF с помощью useMemo
-  const calculatedCashFlowData: MonthlyCashFlow[] = useMemo(() => generateCashFlow(
-    stageList, currentPortfolio, currentParams, caseloadDistribution, staffList, costList
-  ), [stageList, currentPortfolio, currentParams, caseloadDistribution, staffList, costList]);
+
+// Основной компонент отчета
+// // Принимаем aggregatedReportData и modelingYear как props
+const HorizontalCashflowReport: React.FC<HorizontalCashflowReportProps> = ({
+  aggregatedReportData,
+  modelingYear,
+}) => {
+  // // Убираем расчеты, т.к. данные приходят из props
+  // const costList = useSelector((state: RootState) => state.costs.costList);
+  // const stageList = useSelector((state: RootState) => state.stages.stageList);
+  // const { currentPortfolio, currentParams, caseloadDistribution } = useSelector((state: RootState) => state.financials);
+  // const staffList = useSelector((state: RootState) => state.staff.staffList);
+  // const calculatedCashFlowData: MonthlyCashFlow[] = useMemo(() => generateCashFlow(...), [...]);
 
   const [period, setPeriod] = useState<'month' | 'quarter'>('month');
 
@@ -47,24 +55,11 @@ const HorizontalCashflowReport: React.FC = () => {
     }
   };
 
-  // Определяем год моделирования
-  const modelingYear = useMemo(() => {
-      let yearToUse: number = new Date().getFullYear();
-      let minYearFound: number | null = null;
-      costList.forEach(cost => {
-          const year = getYear(cost.startDate);
-          if (year !== null && (minYearFound === null || year < minYearFound)) {
-              minYearFound = year;
-          }
-      });
-      if (minYearFound !== null) yearToUse = minYearFound;
-      return yearToUse;
-  }, [costList]);
+  // // Используем modelingYear из props
+  // const modelingYear = useMemo(() => {...}, [costList]);
 
-  // Агрегируем данные для отчета, вызывая функцию из утилит
-  const reportData: ReportRow[] = useMemo(() => aggregateReportData(
-    costList, staffList, calculatedCashFlowData, modelingYear, currentPortfolio
-  ), [costList, staffList, calculatedCashFlowData, modelingYear, currentPortfolio]);
+  // // Используем aggregatedReportData из props
+  const reportData: ReportRow[] = aggregatedReportData;
 
   // Определяем колонки для отображения
   const columns = useMemo(() => {

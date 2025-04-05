@@ -1,9 +1,12 @@
-import React from 'react';
-import { useSelector } from 'react-redux'; // Импортируем useSelector
-import { RootState } from '../../store/store'; // Импортируем RootState
-// // Импортируем расчеты и типы из новых модулей
-import { generateCashFlow, MonthlyCashFlow } from '../../utils/cashFlowCalculations'; // // Импорт CF
-import { generatePnL, PnLData } from '../../utils/pnlCalculations'; // // Импорт P&L
+import React, { useMemo } from 'react';
+// // Убираем useSelector и RootState, т.к. данные придут через props
+// import { useSelector } from 'react-redux';
+// import { RootState } from '../../store/store';
+// // Убираем импорты расчетов
+// import { generatePnL, PnLData } from '../../utils/pnlCalculations';
+// // Импортируем только нужные типы и утилиты
+import { ReportRow, monthNames } from './HorizontalCashflowReport/reportUtils';
+import { FinancialParams } from '../../types/financials'; // Импортируем тип для currentParams
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import Box from '@mui/material/Box';
@@ -18,58 +21,69 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 
+// // Определяем тип для P&L итогов (может быть вынесен в types)
+interface TotalPnLData {
+    totalRevenue: number;
+    totalLaborCostFixed: number;
+    totalLaborCostVariable: number;
+    totalOtherCostsFixed: number;
+    totalOtherCostsVariable: number;
+    totalCapitalCostsExpensed: number;
+    totalOperatingCosts: number;
+    profitBeforeTax: number;
+    taxAmount: number;
+    netProfit: number;
+}
+
+// // Определяем тип для props
+interface FinancialReportProps {
+  aggregatedReportData: ReportRow[];
+  totalPnlData: TotalPnLData; // Принимаем итоговые P&L данные
+  currentParams: FinancialParams; // Принимаем currentParams для форматирования P&L
+}
+
 // // Компонент для отображения финансовых отчетов (CF, P&L)
-const FinancialReport: React.FC = () => {
+// // Принимаем aggregatedReportData, totalPnlData, currentParams как props
+const FinancialReport: React.FC<FinancialReportProps> = ({
+  aggregatedReportData,
+  totalPnlData,
+  currentParams,
+ }) => {
   const [selectedTab, setSelectedTab] = React.useState(0);
 
-  // // Получаем state и рассчитываем данные
-  const state = useSelector((state: RootState) => state);
-  // // Используем useMemo для кэширования расчетов, чтобы они не выполнялись при каждом рендере
-  // // Получаем параметры для передачи в расчеты
-  const { stageList } = state.stages;
-  const { currentPortfolio, currentParams, caseloadDistribution } = state.financials;
-  const { staffList } = state.staff;
-  const { costList } = state.costs;
+  // // Используем данные из props
+  // // 4. Извлекаем строку "Чистый денежный поток" из props
+  const finalNetCashFlowRow = useMemo(() =>
+    aggregatedReportData.find(row => row.name === 'Чистый денежный поток'),
+    [aggregatedReportData]
+  );
+  // // Используем ЧДП, извлеченный из aggregatedReportData (Level 0)
+  const monthlyNetCashFlow = finalNetCashFlowRow?.periodAmounts ?? Array(12).fill(0);
 
-  // // Используем useMemo для кэширования расчетов
-  // // Передаем currentParams в generateCashFlow
-  const cashFlowData: MonthlyCashFlow[] = React.useMemo(() => generateCashFlow(
-    stageList, currentPortfolio, currentParams, caseloadDistribution, staffList, costList
-  ), [stageList, currentPortfolio, currentParams, caseloadDistribution, staffList, costList]);
+  // // 4a. Извлекаем строку Доходов (уровень 1, isIncome=true) из props
+  const incomeRow = useMemo(() =>
+      aggregatedReportData.find(r => r.level === 1 && r.isIncome === true),
+      [aggregatedReportData]
+  );
+  const monthlyIncome = incomeRow?.periodAmounts ?? Array(12).fill(0);
 
-  // // Передаем currentParams в generatePnL, получаем массив годовых P&L
-  const yearlyPnlData: PnLData[] = React.useMemo(() => generatePnL(
-    cashFlowData, currentParams
-  ), [cashFlowData, currentParams]);
+  // // 4b. Рассчитываем Расходы для верхней таблицы как Доходы (L1) - Чистый денежный поток (L0) из props
+  const monthlyTotalExpenses = useMemo(() =>
+      monthlyIncome.map((income, index) => income - (monthlyNetCashFlow[index] ?? 0)),
+      [monthlyIncome, monthlyNetCashFlow]
+  );
 
-  // // Рассчитываем итоговые P&L показатели за весь срок проекта
-  const totalPnlData = React.useMemo(() => {
-    if (!yearlyPnlData || yearlyPnlData.length === 0) {
-      // // Возвращаем нулевые значения, если P&L не рассчитан
-      return {
-        totalRevenue: 0, totalLaborCostFixed: 0, totalLaborCostVariable: 0,
-        totalOtherCostsFixed: 0, totalOtherCostsVariable: 0, totalCapitalCostsExpensed: 0,
-        totalOperatingCosts: 0, profitBeforeTax: 0, taxAmount: 0, netProfit: 0,
-      };
-    }
-    // // Суммируем годовые показатели
-    return yearlyPnlData.reduce((acc, yearData) => ({
-      totalRevenue: acc.totalRevenue + yearData.totalRevenue,
-      totalLaborCostFixed: acc.totalLaborCostFixed + yearData.totalLaborCostFixed,
-      totalLaborCostVariable: acc.totalLaborCostVariable + yearData.totalLaborCostVariable,
-      totalOtherCostsFixed: acc.totalOtherCostsFixed + yearData.totalOtherCostsFixed,
-      totalOtherCostsVariable: acc.totalOtherCostsVariable + yearData.totalOtherCostsVariable,
-      totalCapitalCostsExpensed: acc.totalCapitalCostsExpensed + yearData.totalCapitalCostsExpensed, // Суммируем, хотя значение только в 1-й год
-      totalOperatingCosts: acc.totalOperatingCosts + yearData.totalOperatingCosts,
-      profitBeforeTax: acc.profitBeforeTax + yearData.profitBeforeTax,
-      taxAmount: acc.taxAmount + yearData.taxAmount,
-      netProfit: acc.netProfit + yearData.netProfit,
-    }), { // // Начальные значения аккумулятора
-      totalRevenue: 0, totalLaborCostFixed: 0, totalLaborCostVariable: 0,
-      totalOtherCostsFixed: 0, totalOtherCostsVariable: 0, totalCapitalCostsExpensed: 0,
-      totalOperatingCosts: 0, profitBeforeTax: 0, taxAmount: 0, netProfit: 0,
+  // // 5. Рассчитываем накопленный поток на основе финального ЧДП (извлеченного из props)
+  const finalCumulativeCashFlow = useMemo(() => {
+    let cumulative = 0;
+    return monthlyNetCashFlow.map((net: number) => {
+      cumulative += net;
+      return cumulative;
     });
-  }, [yearlyPnlData]);
+  }, [monthlyNetCashFlow]);
+
+
+  // // Убираем все внутренние расчеты P&L, используем totalPnlData из props
 
 
   // // Хелпер для форматирования чисел
@@ -103,25 +117,32 @@ const FinancialReport: React.FC = () => {
                 <TableCell>Месяц</TableCell>
                 <TableCell align="right">Доходы</TableCell>
                 <TableCell align="right">Расходы</TableCell>
-                <TableCell align="right">Чистый поток</TableCell>
+                {/* // Изменено: Переименован заголовок */}
+                <TableCell align="right">Чистый денежный поток</TableCell>
                 <TableCell align="right">Накопленный поток</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {cashFlowData.map((row) => (
-                <TableRow key={row.month}>
-                  <TableCell>{row.month}</TableCell>
-                  {/* // Изменено: Отображаем основные показатели CF */}
-                  <TableCell align="right">{formatCurrency(row.inflow)}</TableCell>
-                  <TableCell align="right">{formatCurrency(row.outflowTotal)}</TableCell> {/* // Используем общие расходы */}
-                  <TableCell align="right" sx={{ color: row.net < 0 ? 'error.main' : 'success.main' }}>
-                    {formatCurrency(row.net)}
-                  </TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 'bold', color: row.cumulative < 0 ? 'error.main' : 'inherit' }}>
-                    {formatCurrency(row.cumulative)}
-                  </TableCell>
-                </TableRow>
-              ))}
+              {/* // Отображаем данные: извлеченный доход L1, сумма расходов L1 (OpEx+Tax), извлеченный ЧДП L0 */}
+              {monthNames.map((monthName: string, index: number) => { // Итерируем по месяцам
+                const income = monthlyIncome[index] ?? 0;         // Извлеченный доход (Level 1)
+                const expenses = monthlyTotalExpenses[index] ?? 0; // Сумма OpEx (L1) + Taxes (L1)
+                const netCashFlow = monthlyNetCashFlow[index] ?? 0; // Извлеченный ЧДП (Level 0)
+                const cumulativeCashFlow = finalCumulativeCashFlow[index] ?? 0; // Рассчитанный накопленный поток
+                return (
+                  <TableRow key={monthName}>
+                    <TableCell>{monthName}</TableCell>
+                    <TableCell align="right">{formatCurrency(income)}</TableCell>
+                    <TableCell align="right">{formatCurrency(expenses)}</TableCell>
+                    <TableCell align="right" sx={{ color: netCashFlow < 0 ? 'error.main' : 'success.main' }}>
+                      {formatCurrency(netCashFlow)}
+                    </TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 'bold', color: cumulativeCashFlow < 0 ? 'error.main' : 'inherit' }}>
+                      {formatCurrency(cumulativeCashFlow)}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </TableContainer>

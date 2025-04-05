@@ -168,10 +168,7 @@ export const aggregateReportData = (
 
     // 4. Преобразуем в плоский массив
     const finalReportRows: ReportRow[] = [];
-    let netCashFlowMonthly = Array(12).fill(0);
-    // const incomeAmounts = calculatedCashFlowData.map(monthData => monthData.inflow); // Доход уже добавлен в aggregated
-    // finalReportRows.push({ name: 'Поступления (от взыскания)', periodAmounts: incomeAmounts, level: 1, isIncome: true });
-    // incomeAmounts.forEach((amount, index) => netCashFlowMonthly[index] += amount); // Будет учтено при итерации
+    // let netCashFlowMonthly = Array(12).fill(0); // // Убираем предварительный расчет ЧДП
 
     // Определяем желаемый порядок категорий
     const categoryOrder = ['Операционная', 'Финансовая', 'Инвестиционная', 'Налоговая'];
@@ -192,8 +189,7 @@ export const aggregateReportData = (
                     // // Переименовываем строку "Расходы" под "Налоговая" в "Итого налоги"
                     const summaryRowName = (mainCat === 'Налоговая' && type === 'Расходы') ? 'Итого налоги' : type;
                     finalReportRows.push({ name: summaryRowName, periodAmounts: typeData.totals, level: 1, isIncome: isIncomeType }); // Заголовок типа/Итого налоги
-                    // Суммируем в чистый поток
-                    typeData.totals.forEach((amount, index) => netCashFlowMonthly[index] += (isIncomeType ? amount : -amount));
+                    // // Убираем суммирование в netCashFlowMonthly здесь
 
                     // Добавляем строки деталей (cost.name или названия трудозатрат)
                     const detailTagsMap = new Map(typeData.tags); // Копируем, чтобы можно было удалять
@@ -221,6 +217,18 @@ export const aggregateReportData = (
         }
     });
 
+    // 5. Рассчитываем Чистый денежный поток на основе ВСЕХ сгенерированных строк level 1
+    const netCashFlowMonthly = Array(12).fill(0);
+    finalReportRows.forEach(row => {
+        // Суммируем ВСЕ строки уровня 1 (Доходы/Расходы/Итого налоги)
+        if (row.level === 1) {
+            row.periodAmounts.forEach((amount, index) => {
+                netCashFlowMonthly[index] += (row.isIncome ? amount : -amount);
+            });
+        }
+    });
+
+    // Добавляем итоговую строку ЧДП
     finalReportRows.push({ name: 'Чистый денежный поток', periodAmounts: netCashFlowMonthly, level: 0, isIncome: undefined });
     console.log('[aggregateReportData] Final Report Rows:', JSON.stringify(finalReportRows)); // <-- Log final rows
     return finalReportRows;
