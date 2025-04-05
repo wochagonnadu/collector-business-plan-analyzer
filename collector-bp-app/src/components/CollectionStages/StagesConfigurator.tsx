@@ -112,11 +112,21 @@ const StagesConfigurator: React.FC = () => {
             id={`panel-${stage.id}-header`}
           >
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-              <Typography sx={{ flexShrink: 0, mr: 2 }}>{stage.name}</Typography>
-              <Typography sx={{ color: 'text.secondary', mr: 2 }}>
-                {`Сроки: ${stage.durationDays.min}-${stage.durationDays.max} дн.`}
-              </Typography>
-              <Box sx={{ ml: 'auto' }}> {/* // Кнопки справа */}
+              {/* // Группируем название, сроки и вероятности */}
+              <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1, mr: 2 }}>
+                <Typography sx={{ flexShrink: 0, mr: 2 }}>{stage.name}</Typography>
+                <Typography sx={{ color: 'text.secondary', mr: 2, whiteSpace: 'nowrap' }}>
+                  {`Сроки: ${stage.durationDays.min}-${stage.durationDays.max} дн.`}
+                </Typography>
+                {/* // Добавляем отображение вероятностей */}
+                <Typography sx={{ color: 'text.secondary', mr: 2, whiteSpace: 'nowrap' }}>
+                  {`Возврат: ${stage.recoveryProbability != null ? (stage.recoveryProbability * 100).toFixed(1) + '%' : 'N/A'}`}
+                </Typography>
+                <Typography sx={{ color: 'text.secondary', mr: 2, whiteSpace: 'nowrap' }}>
+                  {`Списание: ${stage.writeOffProbability != null ? (stage.writeOffProbability * 100).toFixed(1) + '%' : 'N/A'}`}
+                </Typography>
+              </Box>
+              <Box sx={{ ml: 'auto', flexShrink: 0 }}> {/* // Кнопки справа, не сжимаются */}
                 {/* // Передаем объект stage в handleEditStage */}
                 <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleEditStage(stage); }}>
                   <EditIcon fontSize="inherit" />
