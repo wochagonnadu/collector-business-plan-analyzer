@@ -6,6 +6,7 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
+import Header from './Header'; // Import the Header component
 
 // // Определяем тип для props компонента Layout
 interface LayoutProps {
@@ -16,30 +17,8 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      {/* // Верхняя панель приложения (AppBar) */}
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Collector BP Analyzer {/* // Название приложения */}
-          </Typography>
-          {/* // Кнопки навигации (пока простые) */}
-          <Button color="inherit" component={RouterLink} to="/dashboard">
-            Dashboard
-          </Button>
-          <Button color="inherit" component={RouterLink} to="/staff">
-            Персонал
-          </Button>
-          <Button color="inherit" component={RouterLink} to="/stages">
-            Этапы
-          </Button>
-          <Button color="inherit" component={RouterLink} to="/costs">
-            Затраты
-          </Button>
-          <Button color="inherit" component={RouterLink} to="/financials">
-            Финансы
-          </Button>
-        </Toolbar>
-      </AppBar>
+      {/* Use the Header component which includes both AppBar and metrics bar */}
+      <Header />
 
       {/* // Основная область для контента страниц */}
       {/* // Убираем maxWidth для использования большей ширины экрана */}
