@@ -12,12 +12,12 @@ const initialState: StaffState = {
   staffList: [
     // // Заменяем efficiencyRatio на efficiencyPercent (например, 85 для 85%)
     // // maxCaseload пока не задаем по умолчанию
-    // // Добавляем accidentInsuranceRatePercent: undefined (ставка взноса от несчастных случаев)
-    { id: crypto.randomUUID(), group: 'Полевая служба', position: 'Коллектор', count: 2, salary: 100000, workingHours: 160, efficiencyPercent: 85, accidentInsuranceRatePercent: undefined },
-    { id: crypto.randomUUID(), group: 'Контакт-центр', position: 'Оператор', count: 2, salary: 100000, workingHours: 160, efficiencyPercent: 85, accidentInsuranceRatePercent: undefined },
-    { id: crypto.randomUUID(), group: 'Аналитика', position: 'Аналитик', count: 1, salary: 150000, workingHours: 160, efficiencyPercent: 90, accidentInsuranceRatePercent: undefined },
-    { id: crypto.randomUUID(), group: 'Юридическая служба', position: 'Юрист', count: 1, salary: 150000, workingHours: 160, efficiencyPercent: 85, accidentInsuranceRatePercent: undefined },
-    { id: crypto.randomUUID(), group: 'IT', position: 'Администратор', count: 1, salary: 150000, workingHours: 160, efficiencyPercent: 95, accidentInsuranceRatePercent: undefined },
+    // // Убрано поле accidentInsuranceRatePercent
+    { id: crypto.randomUUID(), group: 'Полевая служба', position: 'Коллектор', count: 2, salary: 100000, workingHours: 160, efficiencyPercent: 85 }, // // Убрано accidentInsuranceRatePercent
+    { id: crypto.randomUUID(), group: 'Контакт-центр', position: 'Оператор', count: 2, salary: 100000, workingHours: 160, efficiencyPercent: 85 }, // // Убрано accidentInsuranceRatePercent
+    { id: crypto.randomUUID(), group: 'Аналитика', position: 'Аналитик', count: 1, salary: 150000, workingHours: 160, efficiencyPercent: 90 }, // // Убрано accidentInsuranceRatePercent
+    { id: crypto.randomUUID(), group: 'Юридическая служба', position: 'Юрист', count: 1, salary: 150000, workingHours: 160, efficiencyPercent: 85 }, // // Убрано accidentInsuranceRatePercent
+    { id: crypto.randomUUID(), group: 'IT', position: 'Администратор', count: 1, salary: 150000, workingHours: 160, efficiencyPercent: 95 }, // // Убрано accidentInsuranceRatePercent
   ],
 };
 
