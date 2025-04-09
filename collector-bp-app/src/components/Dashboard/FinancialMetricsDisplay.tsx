@@ -1,6 +1,8 @@
-import React, { useMemo } from 'react'; // Добавляем useMemo
-import { useSelector } from 'react-redux';
+import React, { useMemo, useEffect } from 'react'; // Add useEffect
+import { useSelector, useDispatch } from 'react-redux'; // Add useDispatch
 import { RootState } from '../../store/store';
+// Import the updateMetrics action
+import { updateMetrics } from '../../store/slices/financialsSlice';
 // // Импортируем расчеты из новых модулей
 import { generateCashFlow } from '../../utils/cashFlowCalculations'; // // Исправлен путь импорта CF
 import { generatePnL } from '../../utils/pnlCalculations'; // // Исправлен путь импорта P&L
@@ -123,6 +125,30 @@ const FinancialMetricsDisplay: React.FC = () => {
       </Box>
     </Paper>
   );
+  // Add dispatch
+  const dispatch = useDispatch();
+  
+  // Use useEffect to update Redux when metrics change
+  useEffect(() => {
+    dispatch(updateMetrics({
+      maxCollectionTime,
+      breakEvenCases: breakEven,
+      costPerCase,
+      recoveryRate: overallRecoveryRate,
+      ebitda: averageEbitda,
+      npv,
+      irr
+    }));
+  }, [
+    dispatch, 
+    maxCollectionTime, 
+    breakEven, 
+    costPerCase, 
+    overallRecoveryRate, 
+    averageEbitda,
+    npv,
+    irr
+  ]);
 };
 
 export default FinancialMetricsDisplay;

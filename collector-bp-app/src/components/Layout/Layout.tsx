@@ -1,10 +1,11 @@
 import React, { ReactNode } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
-import AppBar from '@mui/material/AppBar';
+// Remove the unused RouterLink import
+// import { Link as RouterLink } from 'react-router-dom';
+// import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
-import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
+// import Toolbar from '@mui/material/Toolbar';
+// import Typography from '@mui/material/Typography';
+// import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import Header from './Header'; // Import the Header component
 

@@ -13,6 +13,18 @@ import { RootState, AppDispatch } from '../store';
 
 
 // // Определяем тип для состояния этого среза
+// Add FinancialMetrics interface
+export interface FinancialMetrics {
+  maxCollectionTime: number;
+  breakEvenCases: number;
+  costPerCase: number;
+  recoveryRate: number;
+  ebitda: number;
+  npv?: number;
+  irr?: number;
+}
+
+// Update FinancialsState interface to include metrics
 interface FinancialsState {
   currentPortfolio: DebtPortfolio;
   currentParams: FinancialParams;
@@ -20,6 +32,8 @@ interface FinancialsState {
   activeScenarioId: string | null;
   // // Добавляем поле для хранения процентов распределения caseload по ID этапов
   caseloadDistribution: { [stageId: string]: number };
+  // Add metrics property to the interface
+  metrics: FinancialMetrics;
 }
 
 // // Начальные значения по умолчанию
@@ -54,6 +68,14 @@ const initialState: FinancialsState = {
   // // Инициализируем caseloadDistribution пустым объектом
   // // Он будет заполняться/обновляться при загрузке/изменении этапов
   caseloadDistribution: {},
+  // Fix the syntax error: change semicolon to colon
+  metrics: {
+    maxCollectionTime: 380,
+    breakEvenCases: 1200,
+    costPerCase: 15000,
+    recoveryRate: 0.35,
+    ebitda: -27125196
+  }
 };
 
 // // Создаем срез состояния для финансового моделирования
@@ -172,6 +194,11 @@ const financialsSlice = createSlice({
        }
        console.log('Синхронизировано распределение caseload:', state.caseloadDistribution);
      },
+    // Add updateMetrics reducer
+    updateMetrics: (state, action: PayloadAction<FinancialMetrics>) => {
+      state.metrics = action.payload;
+      console.log('Updated metrics:', action.payload);
+    },
   },
 });
 
@@ -185,6 +212,7 @@ export const {
   deleteScenario,
   resetToDefaults,
   syncCaseloadDistribution, // Добавляем новый action
+  updateMetrics 
 } = financialsSlice.actions;
 
  // // Экспортируем редьюсер
