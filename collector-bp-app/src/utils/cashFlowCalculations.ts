@@ -242,10 +242,11 @@ export const generateCashFlow = (
   const cashFlow: MonthlyCashFlow[] = [];
   let cumulativeFlow = 0;
   for (let i = 0; i < totalMonths; i++) { // // Цикл по всем месяцам
-    const inflow = monthlyInflows[i] ?? 0; // // Используем ?? 0 на случай, если симуляция вернула меньше месяцев // // ВОССТАНОВЛЕНО: Доход = взысканный принципал
+    const inflow = monthlyInflows[i] ?? 0; // // Используем ?? 0 на случай, если симуляция вернула меньше месяцев
     // // Используем общие фиксированные трудозатраты (оклады + взносы)
     const outflowLaborFixed = monthlyTotalFixedLaborCost;
-    const outflowLaborVariable = monthlyVariableLaborCosts[i] ?? 0;
+    // // ИЗМЕНЕНО: Переменные трудозатраты = 5% от дохода (входящего потока) этого месяца
+    const outflowLaborVariable = inflow * 0.05;
     const outflowOtherFixed = monthlyFixedOtherCosts[i] ?? 0;
     const outflowOtherVariable = monthlyVariableOtherCosts[i] ?? 0;
     // // Добавляем стоимость покупки портфеля к капитальным затратам в первый месяц (i === 0) ТОЛЬКО если isInitialPurchase = true
