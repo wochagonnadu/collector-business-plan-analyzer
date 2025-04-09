@@ -9,16 +9,60 @@ interface CostsState {
 // // Начальное состояние - можно добавить пример для наглядности
 const initialState: CostsState = {
   costList: [
-    // // Пример затраты для демонстрации
-    // {
-    //   id: crypto.randomUUID(),
-    //   name: 'Аренда офиса',
-    //   amount: 50000,
-    //   tag: 'Операционные',
-    //   cfCategory: 'Операционная - Расходы', // // Добавлено поле категории ДДС
-    //   periodicity: 'Ежемесячно',
-    //   startDate: '2024-01-01',
-    // },
+    {
+      id: crypto.randomUUID(),
+      name: 'Аренда офиса',
+      amount: 70000,
+      tag: 'Операционные',
+      cfCategory: 'Операционная - Расходы',
+      periodicity: 'Ежемесячно',
+      startDate: '2024-01-01',
+    },
+    {
+      id: crypto.randomUUID(),
+      name: 'Программное обеспечение',
+      amount: 20000,
+      tag: 'Операционные',
+      cfCategory: 'Операционная - Расходы',
+      periodicity: 'Ежемесячно',
+      startDate: '2024-01-01',
+    },
+    {
+      id: crypto.randomUUID(),
+      name: 'IP-телефония',
+      amount: 5000,
+      tag: 'Операционные',
+      cfCategory: 'Операционная - Расходы',
+      periodicity: 'Ежемесячно',
+      startDate: '2024-01-01',
+    },
+    {
+      id: crypto.randomUUID(),
+      name: 'Мебель',
+      amount: 100000,
+      tag: 'Капитальные',
+      cfCategory: 'Инвестиционная - Расходы',
+      periodicity: 'Одноразово',
+      startDate: '2024-01-01',
+    },
+    {
+      id: crypto.randomUUID(),
+      name: 'Компьютеры',
+      amount: 150000,
+      tag: 'Капитальные',
+      cfCategory: 'Инвестиционная - Расходы',
+      periodicity: 'Одноразово',
+      startDate: '2024-01-01',
+    },
+    {
+      id: crypto.randomUUID(),
+      name: 'Оргтехника',
+      amount: 75000,
+      tag: 'Капитальные',
+      cfCategory: 'Инвестиционная - Расходы',
+      periodicity: 'Одноразово',
+      startDate: '2024-01-01',
+    },
   ],
 };
 

@@ -81,7 +81,8 @@ const HorizontalCashflowReport: React.FC<HorizontalCashflowReportProps> = ({
           <ToggleButton value="quarter" aria-label="Квартал">Квартал</ToggleButton>
         </ToggleButtonGroup>
       </Box>
-      <TableContainer sx={{ maxHeight: 600 }}>
+      {/* // Убираем maxHeight, чтобы контейнер автоматически подстраивался под высоту таблицы */}
+      <TableContainer>
         <Table size="small" stickyHeader>
           <TableHead>
             <TableRow sx={{ '& th': { backgroundColor: 'grey.100' } }}>

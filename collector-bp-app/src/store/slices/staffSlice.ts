@@ -13,12 +13,9 @@ const initialState: StaffState = {
     // // Заменяем efficiencyRatio на efficiencyPercent (например, 85 для 85%)
     // // maxCaseload пока не задаем по умолчанию
     // // Добавляем accidentInsuranceRatePercent: undefined (ставка взноса от несчастных случаев)
-    { id: crypto.randomUUID(), group: 'Администрация', position: 'Директор', count: 1, salary: 200000, workingHours: 160, efficiencyPercent: 85, accidentInsuranceRatePercent: undefined },
-    { id: crypto.randomUUID(), group: 'Полевая служба', position: 'Коллектор', count: 4, salary: 100000, workingHours: 160, efficiencyPercent: 85, accidentInsuranceRatePercent: undefined },
-    { id: crypto.randomUUID(), group: 'Контакт-центр', position: 'Оператор', count: 4, salary: 100000, workingHours: 160, efficiencyPercent: 85, accidentInsuranceRatePercent: undefined },
+    { id: crypto.randomUUID(), group: 'Полевая служба', position: 'Коллектор', count: 2, salary: 100000, workingHours: 160, efficiencyPercent: 85, accidentInsuranceRatePercent: undefined },
+    { id: crypto.randomUUID(), group: 'Контакт-центр', position: 'Оператор', count: 2, salary: 100000, workingHours: 160, efficiencyPercent: 85, accidentInsuranceRatePercent: undefined },
     { id: crypto.randomUUID(), group: 'Аналитика', position: 'Аналитик', count: 1, salary: 150000, workingHours: 160, efficiencyPercent: 90, accidentInsuranceRatePercent: undefined },
-    { id: crypto.randomUUID(), group: 'Клиентская служба', position: 'Менеджер', count: 1, salary: 150000, workingHours: 160, efficiencyPercent: 85, accidentInsuranceRatePercent: undefined },
-    { id: crypto.randomUUID(), group: 'Комплаенс', position: 'Менеджер', count: 1, salary: 150000, workingHours: 160, efficiencyPercent: 90, accidentInsuranceRatePercent: undefined },
     { id: crypto.randomUUID(), group: 'Юридическая служба', position: 'Юрист', count: 1, salary: 150000, workingHours: 160, efficiencyPercent: 85, accidentInsuranceRatePercent: undefined },
     { id: crypto.randomUUID(), group: 'IT', position: 'Администратор', count: 1, salary: 150000, workingHours: 160, efficiencyPercent: 95, accidentInsuranceRatePercent: undefined },
   ],
