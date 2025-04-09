@@ -23,6 +23,8 @@ const validationSchema = Yup.object({
   discountRate: Yup.number().required('Обязательно').min(0, 'Не может быть меньше 0').max(1, 'Не может быть больше 1').typeError('Должно быть число (0-1)'),
   taxRate: Yup.number().required('Обязательно').min(0, 'Не может быть меньше 0').max(1, 'Не может быть больше 1').typeError('Должно быть число (0-1)'),
   projectDurationYears: Yup.number().oneOf([1, 2, 5], 'Выберите 1, 2 или 5').required('Обязательно'), // // Валидация для срока проекта
+  // // Добавляем валидацию для ставки комиссии
+  variableCommissionRate: Yup.number().required('Обязательно').min(0, 'Не может быть меньше 0').max(1, 'Не может быть больше 1').typeError('Должно быть число (0-1)'),
 });
 
 // // Компонент для конфигурации финансовых параметров
@@ -86,6 +88,26 @@ const FinancialParamsConfig: React.FC = () => {
                     </Typography>
                   )}
                 </FormControl>
+              </Box>
+              {/* // Ставка комиссии (0-1) */}
+              <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}>
+                <MuiTextField
+                  name="variableCommissionRate" // // Используем имя поля из state
+                  label="Ставка комиссии пер. затрат (0-1)" // // Обновляем label
+                  type="number"
+                  // // Отображаем значение из state напрямую
+                  value={values.variableCommissionRate}
+                  // // Используем стандартный handleChange от Formik
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  // // Ошибку показываем для основного поля variableCommissionRate
+                  error={touched.variableCommissionRate && Boolean(errors.variableCommissionRate)}
+                  helperText={touched.variableCommissionRate && errors.variableCommissionRate}
+                  fullWidth
+                  required
+                  // // Обновляем InputProps для диапазона 0-1
+                  InputProps={{ inputProps: { step: 0.01, min: 0, max: 1 } }}
+                />
               </Box>
               {/* // Добавляем чекбокс для выбора режима уплаты налога */}
               <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' }, display: 'flex', alignItems: 'center' }}>

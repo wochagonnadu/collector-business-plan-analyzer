@@ -65,9 +65,9 @@ export const calculatePIT = (annualGrossIncome: number): number => {
  * @param accidentInsuranceRatePercent Ставка страхования от несчастных случаев (в процентах, например, 0.2).
  * @returns Объект с суммами взносов по фондам и итоговой суммой.
  */
+// // Убираем параметр accidentInsuranceRatePercent
 export const calculateEmployerContributions = (
-  annualGrossIncome: number,
-  accidentInsuranceRatePercent: number = 0.2 // Ставка по умолчанию 0.2%
+  annualGrossIncome: number
 ): {
   pension: number;
   social: number;
@@ -94,8 +94,8 @@ export const calculateEmployerContributions = (
   // Расчет взносов в Фонд обязательного медицинского страхования
   const medicalContribution = annualGrossIncome * MEDICAL.rate;
 
-  // Расчет взносов на страхование от несчастных случаев
-  const accidentContribution = annualGrossIncome * (accidentInsuranceRatePercent / 100);
+  // Расчет взносов на страхование от несчастных случаев (используем фиксированную ставку 0.2%)
+  const accidentContribution = annualGrossIncome * 0.002; // 0.2 / 100
 
   // Итоговая сумма взносов
   const totalContributions =

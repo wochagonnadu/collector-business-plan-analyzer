@@ -245,8 +245,9 @@ export const generateCashFlow = (
     const inflow = monthlyInflows[i] ?? 0; // // Используем ?? 0 на случай, если симуляция вернула меньше месяцев
     // // Используем общие фиксированные трудозатраты (оклады + взносы)
     const outflowLaborFixed = monthlyTotalFixedLaborCost;
-    // // ИЗМЕНЕНО: Переменные трудозатраты = 5% от дохода (входящего потока) этого месяца
-    const outflowLaborVariable = inflow * 0.05;
+    // // ИЗМЕНЕНО: Переменные трудозатраты = % от дохода (входящего потока) этого месяца, берем % из params
+    // // Используем params.variableCommissionRate (которая хранится как доля, например 0.05)
+    const outflowLaborVariable = inflow * params.variableCommissionRate;
     const outflowOtherFixed = monthlyFixedOtherCosts[i] ?? 0;
     const outflowOtherVariable = monthlyVariableOtherCosts[i] ?? 0;
     // // Добавляем стоимость покупки портфеля к капитальным затратам в первый месяц (i === 0) ТОЛЬКО если isInitialPurchase = true

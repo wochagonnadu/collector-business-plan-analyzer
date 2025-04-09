@@ -57,6 +57,7 @@ const defaultParams: FinancialParams = {
   taxRate: 0.2, // 20%
   projectDurationYears: 1, // // Срок проекта по умолчанию 1 год
   payTaxesMonthly: false, // // По умолчанию - ежеквартально
+  variableCommissionRate: 0.05, // // Ставка комиссии по умолчанию 5%
 };
 
 // // Начальное состояние
@@ -199,6 +200,17 @@ const financialsSlice = createSlice({
       state.metrics = action.payload;
       console.log('Updated metrics:', action.payload);
     },
+    // // Редьюсер для обновления ставки комиссии переменных затрат
+    updateVariableCommissionRate: (state, action: PayloadAction<number>) => {
+      // // Убедимся, что значение неотрицательное и является числом
+      const rate = Number(action.payload);
+      if (!isNaN(rate) && rate >= 0) {
+        state.currentParams.variableCommissionRate = rate; // // Сохраняем как долю (0.05 для 5%)
+        console.log('Обновлена ставка комиссии переменных затрат:', rate);
+      } else {
+        console.warn('Попытка установить невалидную ставку комиссии:', action.payload);
+      }
+    },
   },
 });
 
@@ -212,7 +224,8 @@ export const {
   deleteScenario,
   resetToDefaults,
   syncCaseloadDistribution, // Добавляем новый action
-  updateMetrics 
+  updateMetrics,
+  updateVariableCommissionRate // // Экспортируем новый action
 } = financialsSlice.actions;
 
  // // Экспортируем редьюсер

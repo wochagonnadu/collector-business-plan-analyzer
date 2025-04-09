@@ -32,11 +32,7 @@ const validationSchema = Yup.object({
     .min(0, 'Нагрузка не может быть отрицательной')
     .integer('Должно быть целым числом')
     .nullable(), // // Разрешаем null или undefined
-  // // Добавляем валидацию для ставки страхования от несчастных случаев (опционально)
-  accidentInsuranceRatePercent: Yup.number()
-    .min(0.2, 'Минимум 0.2%')
-    .max(8.5, 'Максимум 8.5%')
-    .nullable(), // // Разрешаем null или undefined
+  // // Убираем валидацию для ставки страхования от несчастных случаев
 });
 
 // // Компонент формы для добавления/редактирования персонала (используем Box вместо Grid)
@@ -55,7 +51,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ initialValues, onClose }) => {
          // efficiencyRatio: 0.85, // // Убираем старое поле
          efficiencyPercent: 85, // // Добавляем новое поле с %
          maxCaseload: undefined, // // Добавляем опциональное поле
-         accidentInsuranceRatePercent: undefined, // // Добавляем поле для ставки страх. от несч. случаев
+         // accidentInsuranceRatePercent: 0.2, // // Убираем поле из начальных значений
        };
 
    // // Убедимся, что тип values соответствует обновленному StaffType (Formik сделает это автоматически)
@@ -185,23 +181,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ initialValues, onClose }) => {
                  InputProps={{ inputProps: { min: 0 } }}
                />
              </Box>
-             {/* // Добавляем поле для ставки страхования от несчастных случаев */}
-             <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}>
-               <MuiTextField
-                 name="accidentInsuranceRatePercent"
-                 label="Ставка страх. от НС (%)"
-                 type="number"
-                 // // Используем ?? '' для обработки undefined/null в значении
-                 value={values.accidentInsuranceRatePercent ?? ''}
-                 onChange={handleChange}
-                 onBlur={handleBlur}
-                 error={touched.accidentInsuranceRatePercent && Boolean(errors.accidentInsuranceRatePercent)}
-                 helperText={touched.accidentInsuranceRatePercent && errors.accidentInsuranceRatePercent}
-                 fullWidth
-                 // // Поле не обязательное
-                 InputProps={{ inputProps: { step: 0.1, min: 0.2, max: 8.5 } }}
-               />
-             </Box>
+             {/* // Убираем поле для ставки страхования от несчастных случаев */}
            </Box>
            {/* // Кнопки отправки и отмены */}
           <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>

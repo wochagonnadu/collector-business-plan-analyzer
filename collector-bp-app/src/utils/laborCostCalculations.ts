@@ -178,10 +178,10 @@ export const calculateTotalAnnualEmployerContributions = (
     // const annualGrossSalaryPerType = staff.salary * staff.count * 12; // // УДАЛЕНО: Переменная не используется
 
     // // Рассчитываем взносы для ОДНОГО сотрудника этого типа
-    // // Используем ставку от НС из данных сотрудника или дефолтную (0.2%)
+    // // Рассчитываем взносы для ОДНОГО сотрудника этого типа
+    // // accidentInsuranceRatePercent больше не передается, т.к. ставка 0.2% зашита в calculateEmployerContributions
     const contributionsPerEmployee = calculateEmployerContributions(
-      staff.salary * 12, // // Годовой доход одного сотрудника
-      staff.accidentInsuranceRatePercent // // Используем сохраненную ставку или undefined (тогда сработает дефолт в функции)
+      staff.salary * 12 // // Годовой доход одного сотрудника
     );
 
     // // Суммируем взносы для ВСЕХ сотрудников этого типа (взносы на одного * кол-во)
