@@ -1,0 +1,40 @@
+
+# PATH: .github/workflows/deploy.yml
+# WHAT: GitHub Actions workflow to deploy the Vite application to GitHub Pages.
+# WHY:  Automates the build and deployment process, ensuring consistency and eliminating manual steps.
+# RELEVANT: collector-bp-app/vite.config.ts, collector-bp-app/package.json
+
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main # или ваша основная ветка
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Укажите вашу версию Node.js
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: ./collector-bp-app # Указываем рабочую директорию
+
+      - name: Build project
+        run: npm run build
+        working-directory: ./collector-bp-app # Указываем рабочую директорию
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./collector-bp-app/dist # Директория для публикации
+

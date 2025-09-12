@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "homepage": "https://wochagonnadu.github.io/collector-business-plan-analyzer",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
